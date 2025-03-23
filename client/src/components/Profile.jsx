@@ -13,7 +13,9 @@ import {
   XMarkIcon, 
   CheckCircleIcon, 
   EnvelopeIcon, 
-  IdentificationIcon
+  IdentificationIcon,
+  EyeIcon,
+  EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import Webcam from 'react-webcam';
 import * as tf from '@tensorflow/tfjs';
@@ -47,6 +49,11 @@ const Profile = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const fileInputRef = useRef(null);
+
+  // First, add state variables to track password visibility
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     // Load face detection models
@@ -666,65 +673,98 @@ const Profile = () => {
                   <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
                     Current Password
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-1 relative">
                     <input
                       id="currentPassword"
                       name="currentPassword"
-                      type="password"
+                      type={showCurrentPassword ? 'text' : 'password'}
                       autoComplete="current-password"
                       value={passwordForm.currentPassword}
                       onChange={handlePasswordChange}
                       required
                       className={`appearance-none block w-full px-3 py-2 border ${
                         passwordErrors.currentPassword ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10`}
                     />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                      {showCurrentPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                      )}
+                    </button>
                     {passwordErrors.currentPassword && (
                       <p className="mt-2 text-sm text-red-600">{passwordErrors.currentPassword}</p>
                     )}
                   </div>
                 </div>
-                
+
                 <div>
                   <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
                     New Password
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-1 relative">
                     <input
                       id="newPassword"
                       name="newPassword"
-                      type="password"
+                      type={showNewPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       value={passwordForm.newPassword}
                       onChange={handlePasswordChange}
                       required
                       className={`appearance-none block w-full px-3 py-2 border ${
                         passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10`}
                     />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                      )}
+                    </button>
                     {passwordErrors.newPassword && (
                       <p className="mt-2 text-sm text-red-600">{passwordErrors.newPassword}</p>
                     )}
                   </div>
                 </div>
-                
+
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                     Confirm New Password
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-1 relative">
                     <input
                       id="confirmPassword"
                       name="confirmPassword"
-                      type="password"
+                      type={showConfirmPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       value={passwordForm.confirmPassword}
                       onChange={handlePasswordChange}
                       required
                       className={`appearance-none block w-full px-3 py-2 border ${
                         passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10`}
                     />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                      )}
+                    </button>
                     {passwordErrors.confirmPassword && (
                       <p className="mt-2 text-sm text-red-600">{passwordErrors.confirmPassword}</p>
                     )}

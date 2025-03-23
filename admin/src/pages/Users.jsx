@@ -241,49 +241,58 @@ const Users = () => {
               <li key={user._id}>
                 <div className="px-4 py-4 flex items-center sm:px-6">
                   <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <div className="flex text-sm">
-                        <p className="font-medium text-purple-600 truncate">{user.name}</p>
-                        <p className="ml-1 flex-shrink-0 font-normal text-gray-500">
-                          <span className="capitalize">({user.role})</span>
-                        </p>
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-medium mr-4">
+                        {user.name.charAt(0)}
                       </div>
-                      <div className="mt-2 flex">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <span>{user.email}</span>
-                          {user.registrationId && (
-                            <>
-                              <span className="mx-2">&bull;</span>
-                              <span>ID: {user.registrationId}</span>
-                            </>
-                          )}
-                          {user.department?.name && (
-                            <>
-                              <span className="mx-2">&bull;</span>
-                              <span>Dept: {user.department.name}</span>
-                            </>
-                          )}
+                      <div>
+                        <div className="flex text-sm">
+                          <p className="font-medium text-purple-600 truncate">{user.name}</p>
+                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' : 
+                            user.role === 'faculty' ? 'bg-blue-100 text-blue-800' : 
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <span>{user.email}</span>
+                            {user.registrationId && (
+                              <>
+                                <span className="mx-2">&bull;</span>
+                                <span>ID: {user.registrationId}</span>
+                              </>
+                            )}
+                            {user.department?.name && (
+                              <>
+                                <span className="mx-2">&bull;</span>
+                                <span>Dept: {user.department.name}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
-                      <div className="flex -space-x-1 overflow-hidden">
-                        <Link
-                          to={`/users/${user._id}`}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                        >
-                          <PencilIcon className="h-4 w-4 mr-1" />
-                          Edit
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteUser(user._id)}
-                          className="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                        >
-                          <TrashIcon className="h-4 w-4 mr-1" />
-                          Delete
-                        </button>
-                      </div>
+                  </div>
+                  <div className="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
+                    <div className="flex -space-x-1 overflow-hidden">
+                      <Link
+                        to={`/users/${user._id}`}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                      >
+                        <PencilIcon className="h-4 w-4 mr-1" />
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(user._id)}
+                        className="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <TrashIcon className="h-4 w-4 mr-1" />
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -344,94 +353,113 @@ const Users = () => {
                   Add New User
                 </h3>
                 <form onSubmit={handleCreateUser} className="mt-4">
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        required
-                        value={newUser.name}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                      />
+                  <div className="space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                      <h3 className="text-lg font-medium text-gray-900">Account Information</h3>
+                      <p className="mt-1 text-sm text-gray-500">Basic user credentials and access level.</p>
+                      <div className="mt-4 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
+                        <div className="sm:col-span-3">
+                          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                            Full Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="name"
+                            id="name"
+                            required
+                            value={newUser.name}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                            Email <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            id="email"
+                            required
+                            value={newUser.email}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                            Password <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            required
+                            value={newUser.password}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          />
+                          <p className="mt-1 text-xs text-gray-500">Password must be at least 8 characters.</p>
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                            Role <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            id="role"
+                            name="role"
+                            value={newUser.role}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          >
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        required
-                        value={newUser.email}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        name="password"
-                        id="password"
-                        required
-                        value={newUser.password}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                        Role
-                      </label>
-                      <select
-                        id="role"
-                        name="role"
-                        value={newUser.role}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                      >
-                        <option value="student">Student</option>
-                        <option value="faculty">Faculty</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="registrationId" className="block text-sm font-medium text-gray-700">
-                        Registration ID
-                      </label>
-                      <input
-                        type="text"
-                        name="registrationId"
-                        id="registrationId"
-                        value={newUser.registrationId}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700">
-                        Department
-                      </label>
-                      <select
-                        id="departmentId"
-                        name="departmentId"
-                        value={newUser.departmentId}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                      >
-                        <option value="">Select Department</option>
-                        {departments.map(dept => (
-                          <option key={dept._id} value={dept._id}>{dept.name}</option>
-                        ))}
-                      </select>
+                      <h3 className="text-lg font-medium text-gray-900">Additional Details</h3>
+                      <p className="mt-1 text-sm text-gray-500">Organization information for the user.</p>
+                      <div className="mt-4 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
+                        <div className="sm:col-span-3">
+                          <label htmlFor="registrationId" className="block text-sm font-medium text-gray-700">
+                            Registration ID {newUser.role === 'student' && <span className="text-red-500">*</span>}
+                          </label>
+                          <input
+                            type="text"
+                            name="registrationId"
+                            id="registrationId"
+                            required={newUser.role === 'student'}
+                            value={newUser.registrationId}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          />
+                          <p className="mt-1 text-xs text-gray-500">
+                            {newUser.role === 'student' 
+                              ? "Student ID is required for enrollment verification." 
+                              : "Optional identifier for faculty or admin."}
+                          </p>
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700">
+                            Department
+                          </label>
+                          <select
+                            id="departmentId"
+                            name="departmentId"
+                            value={newUser.departmentId}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          >
+                            <option value="">Select Department</option>
+                            {departments.map(dept => (
+                              <option key={dept._id} value={dept._id}>{dept.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">

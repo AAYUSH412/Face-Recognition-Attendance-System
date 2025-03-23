@@ -7,7 +7,10 @@ import {
   UserIcon, 
   CheckCircleIcon, 
   XCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ChevronRightIcon,
+  CalendarIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
 
 const UserDetail = () => {
@@ -141,6 +144,27 @@ const UserDetail = () => {
   
   return (
     <div>
+      <nav className="flex mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center space-x-2">
+          <li>
+            <Link to="/" className="text-gray-500 hover:text-gray-700">
+              Dashboard
+            </Link>
+          </li>
+          <li className="flex items-center">
+            <ChevronRightIcon className="h-4 w-4 text-gray-400 mx-1" />
+            <Link to="/users" className="text-gray-500 hover:text-gray-700">
+              Users
+            </Link>
+          </li>
+          <li className="flex items-center">
+            <ChevronRightIcon className="h-4 w-4 text-gray-400 mx-1" />
+            <span className="text-gray-900 font-medium">
+              {user?.name || 'User Details'}
+            </span>
+          </li>
+        </ol>
+      </nav>
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-900 flex items-center">
@@ -315,24 +339,40 @@ const UserDetail = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {recentAttendance.map((record) => (
-                    <tr key={record._id}>
+                    <tr key={record._id} className="hover:bg-gray-50 transition-all duration-150">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(record.date).toLocaleDateString()}
+                        <div className="flex items-center">
+                          <CalendarIcon className="h-4 w-4 text-gray-400 mr-2" />
+                          {new Date(record.date).toLocaleDateString(undefined, { 
+                            weekday: 'short', 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {record.checkIn?.time ? (
                           <div className="flex items-center">
-                            {record.checkIn.verified ? (
-                              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-1.5" />
-                            ) : (
-                              <XCircleIcon className="h-5 w-5 text-yellow-500 mr-1.5" />
-                            )}
-                            <span className="text-sm text-gray-900">
-                              {new Date(record.checkIn.time).toLocaleTimeString()}
-                            </span>
+                            <div className={`flex-shrink-0 h-8 w-8 rounded-full ${record.checkIn.verified ? 'bg-green-100' : 'bg-yellow-100'} flex items-center justify-center mr-2`}>
+                              {record.checkIn.verified ? 
+                                <CheckCircleIcon className="h-5 w-5 text-green-600" /> : 
+                                <ClockIcon className="h-5 w-5 text-yellow-600" />
+                              }
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {new Date(record.checkIn.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {record.checkIn.verified ? 'Verified' : 'Pending verification'}
+                              </div>
+                            </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-500">--</span>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Not recorded
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

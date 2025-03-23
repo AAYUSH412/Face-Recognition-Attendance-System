@@ -45,16 +45,16 @@ router.post('/mark', auth, async (req, res) => {
     if (isCheckIn) {
       
       if (!attendance) {
-        // Get check-in cutoff time from settings (default: 10:00 AM)
+        // Get check-in cutoff time from settings (default: 9:00 AM)
         const currentTime = new Date();
         const user = await User.findById(req.user.id).populate('department');
         
-        // Determine if the user is late
-        const cutoffHour = user.department?.settings?.lateCutoffHour || 10;
-        const cutoffMinute = user.department?.settings?.lateCutoffMinute || 0;
+        // Set standard work hours (9 AM to 5 PM)
+        const startHour = user.department?.settings?.startHour || 9;
+        const startMinute = user.department?.settings?.startMinute || 0;
         
         const lateCutoff = new Date(today);
-        lateCutoff.setHours(cutoffHour, cutoffMinute, 0, 0);
+        lateCutoff.setHours(startHour, startMinute, 0, 0);
         
         // Set status based on check-in time
         const status = currentTime > lateCutoff ? 'late' : 'present';
@@ -99,12 +99,31 @@ router.post('/mark', auth, async (req, res) => {
         });
       }
       
+      // Check for early checkout
+      const currentTime = new Date();
+      const user = await User.findById(req.user.id).populate('department');
+      
+      // Set standard work end time (5 PM)
+      const endHour = user.department?.settings?.endHour || 17; // 5 PM in 24-hour format
+      const endMinute = user.department?.settings?.endMinute || 0;
+      
+      const endTimeCutoff = new Date(today);
+      endTimeCutoff.setHours(endHour, endMinute, 0, 0);
+      
+      // Update checkout info
       attendance.checkOut = {
         time: new Date(),
         imageUrl,
         confidence: confidence || 0,
         verified: confidence >= 0.8
       };
+      
+      // Set early-checkout status if applicable
+      if (currentTime < endTimeCutoff) {
+        attendance.earlyCheckout = true;
+        // Optionally update the status if you want to track early checkouts in status
+        // attendance.status = attendance.status === 'late' ? 'late-early-checkout' : 'early-checkout';
+      }
       
       if (location) {
         attendance.location = location;

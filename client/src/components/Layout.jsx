@@ -208,7 +208,7 @@ const Layout = ({ children }) => {
             <div className="flex-1 flex flex-col overflow-y-auto pt-5 pb-4">
               <div className="flex items-center justify-center flex-shrink-0 px-4 mb-5">
                 <CalendarIcon className="h-8 w-8 text-white" />
-                <h1 className="text-xl font-bold text-white ml-2">FR Attendance</h1>
+                <h1 className="text-lg font-bold text-white ml-2">Attendance System</h1>
               </div>
               
               {currentUser && (

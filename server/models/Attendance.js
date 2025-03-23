@@ -31,7 +31,7 @@ const AttendanceSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['present', 'absent', 'late', 'half-day'],
+    enum: ['present', 'absent', 'late', 'half-day', 'early-checkout', 'late-early-checkout'],
     default: 'present'
   },
   location: {
@@ -44,6 +44,10 @@ const AttendanceSchema = new mongoose.Schema({
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  earlyCheckout: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 
