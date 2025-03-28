@@ -8,6 +8,10 @@ import Users from './pages/Users'
 import Attendance from './pages/Attendance'
 import Departments from './pages/Departments'
 import UserDetail from './pages/UserDetail'
+import Events from './pages/Events'
+import EventDetail from './pages/EventDetail'
+import EventForm from './pages/EventForm'
+import EventAttendees from './pages/EventAttendees'
 import NotFound from './components/NotFound'
 
 const App = () => {
@@ -24,6 +28,11 @@ const App = () => {
             <Route path="users/:id" element={<UserDetail />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="departments" element={<Departments />} />
+            <Route path="events" element={<Events />} />
+            <Route path="events/new" element={<EventForm />} />
+            <Route path="events/:id" element={<EventDetail />} />
+            <Route path="events/:id/edit" element={<EventForm />} />
+            <Route path="events/:id/attendees" element={<EventAttendees />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />

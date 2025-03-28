@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard'
 import AttendanceCapture from './components/AttendanceCapture'
 import AttendanceHistory from './components/AttendanceHistory'
 import Profile from './components/Profile'
+import Events from './components/Events'
 import NotFound from './components/NotFound'
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
             <Route index element={<Dashboard />} />
             <Route path="mark-attendance" element={<AttendanceCapture />} />
             <Route path="history" element={<AttendanceHistory />} />
+            <Route path="events" element={<Events />} />
             <Route path="profile" element={<Profile />} />
           </Route>
           

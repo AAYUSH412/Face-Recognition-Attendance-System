@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import attendanceRoutes from './routes/attendance.js';
 import departmentRoutes from './routes/departments.js';
+import eventRoutes from './routes/events.js';
 
 // Load environment variables
 dotenv.config({ path: './.env.local' });
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/departments', departmentRoutes);
+app.use('/api/events', eventRoutes);
 
 // Root route
 app.get('/', (req, res) => {

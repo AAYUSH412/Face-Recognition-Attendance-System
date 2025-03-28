@@ -9,7 +9,8 @@ import {
   XMarkIcon,
   Bars3Icon,
   ArrowRightOnRectangleIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline'
 import { useAdminAuth } from '../context/AdminAuthContext'
 
@@ -18,6 +19,7 @@ const navigation = [
   { name: 'Users', href: '/users', icon: UsersIcon, description: 'Manage users and permissions' },
   { name: 'Attendance Records', href: '/attendance', icon: ClockIcon, description: 'View and manage attendance data' },
   { name: 'Departments', href: '/departments', icon: BuildingOfficeIcon, description: 'Organize users by department' },
+  { name: 'Events', href: '/events', icon: CalendarIcon, description: 'Manage events and attendance' },
 ]
 
 function classNames(...classes) {
