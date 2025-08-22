@@ -26,7 +26,8 @@
 | **Project Name** | Face Recognition Attendance System |
 | **Version** | 1.0.0 |
 | **Date** | August 22, 2025 |
-| **Author** | College Project Team |
+| **Author** | [Aayush Vaghela](https://github.com/AAYUSH412) |
+| **GitHub Repository** | https://github.com/AAYUSH412/Face-Recognition-Attendance-System |
 | **Document Type** | Product Requirements Document |
 | **Last Updated** | August 22, 2025 |
 | **Status** | ✅ Active Development |
@@ -538,9 +539,9 @@ graph LR
 ### **4.2 Software Requirements**
 
 #### **Development Environment**
-- **Node.js**: Version 14.0 or higher
-- **npm**: Version 6.0 or higher
-- **MongoDB**: Version 4.4 or higher
+- **Node.js**: Version 18.0 or higher
+- **npm**: Version 8.0 or higher
+- **MongoDB**: Version 7.0 or higher
 - **Git**: Version control system
 
 #### **Browser Compatibility**
@@ -549,7 +550,79 @@ graph LR
 - **Safari**: Version 14+
 - **Edge**: Version 88+
 
-### **4.3 Third-Party Services**
+### **4.3 Docker Requirements (Recommended)**
+
+The Face Recognition Attendance System includes comprehensive Docker containerization for simplified deployment and scalability.
+
+#### **Docker System Requirements**
+- **Docker**: Version 20.10 or higher
+- **Docker Compose**: Version 2.0 or higher
+- **Operating System**: 
+  - Linux (Ubuntu 20.04+, CentOS 8+, RHEL 8+)
+  - macOS 10.15+
+  - Windows 10/11 with WSL2
+- **Memory**: Minimum 4GB RAM, Recommended 8GB+
+- **Storage**: Minimum 10GB free space for containers and volumes
+
+#### **Docker Architecture Benefits**
+- 🚀 **One-Command Deployment**: Complete system setup with single command
+- 🔄 **Environment Consistency**: Identical environments across development, staging, and production
+- 📦 **Service Isolation**: Each component runs in isolated containers
+- 🔧 **Easy Scaling**: Horizontal scaling with container orchestration
+- 🛡️ **Security**: Containerized security with minimal attack surface
+- 📊 **Monitoring**: Built-in health checks and logging
+
+#### **Container Architecture**
+
+```mermaid
+graph TB
+    subgraph "🐳 Docker Environment"
+        subgraph "Frontend Containers"
+            A[📱 Client App<br/>React + Vite]
+            B[👨‍💼 Admin Panel<br/>React + TailwindCSS]
+        end
+        
+        subgraph "Backend Services"
+            C[🚀 Node.js API<br/>Express + JWT]
+            D[🗄️ MongoDB<br/>Database + Init Scripts]
+            E[🔄 Redis<br/>Cache + Sessions]
+        end
+        
+        subgraph "Reverse Proxy"
+            F[🌐 Nginx<br/>Load Balancer + SSL]
+        end
+        
+        subgraph "Development Tools"
+            G[📊 Mongo Express<br/>Database UI]
+            H[📈 Redis Commander<br/>Cache Management]
+        end
+        
+        subgraph "Analytics Stack (Optional)"
+            I[🔍 Elasticsearch<br/>Search + Analytics]
+            J[📊 Kibana<br/>Visualization Dashboard]
+        end
+    end
+    
+    F --> A
+    F --> B
+    F --> C
+    C --> D
+    C --> E
+    A --> C
+    B --> C
+    I --> J
+```
+
+#### **Available Docker Configurations**
+
+| Configuration | Use Case | Services Included |
+|---------------|----------|-------------------|
+| **Development** | Local development with hot reload | Client, Admin, API, MongoDB, Redis, Mongo Express, Redis Commander |
+| **Production** | Production deployment with optimizations | All-in-one container with Nginx, API, Client, Admin, MongoDB, Redis |
+| **Analytics** | Production with advanced monitoring | Production + Elasticsearch + Kibana |
+| **Minimal** | Basic setup for testing | API + MongoDB only |
+
+### **4.4 Third-Party Services**
 - **ImageKit Account**: For cloud image storage
 - **MongoDB Atlas**: For cloud database (optional)
 - **SSL Certificate**: For HTTPS deployment
@@ -860,22 +933,283 @@ Import these files into Postman and run the test suite.
 
 ## **10. Deployment Guide**
 
-### **10.1 Production Environment Setup**
+### **10.1 Docker Deployment (Recommended)**
 
-#### **Backend Deployment (Heroku Example)**
+The Face Recognition Attendance System provides comprehensive Docker containerization for production-ready deployment.
+
+#### **🚀 Quick Production Deployment**
+
 ```bash
-# Install Heroku CLI and login
-heroku login
+# Clone the repository
+git clone https://github.com/AAYUSH412/Face-Recognition-Attendance-System.git
+cd Face-Recognition-Attendance-System
 
-# Create Heroku app
-heroku create your-app-name
+# Configure environment
+cp .env.example .env
+nano .env  # Update with production values
 
-# Set environment variables
-heroku config:set NODE_ENV=production
-heroku config:set MONGODB_URI=your_mongodb_atlas_uri
-heroku config:set JWT_SECRET=your_production_jwt_secret
+# Deploy with automated script
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh prod
+```
 
-# Deploy
+#### **🛠️ Manual Docker Deployment**
+
+```bash
+# Production deployment with docker-compose
+docker-compose up --build -d
+
+# Check deployment status
+docker-compose ps
+
+# View application logs
+docker-compose logs -f
+
+# Access the application
+# Main App: http://your-domain.com
+# Admin Panel: http://your-domain.com/admin
+# API: http://your-domain.com:4000
+```
+
+#### **🔧 Development Environment**
+
+```bash
+# Start development environment
+./scripts/deploy.sh dev
+
+# Or manually:
+docker-compose -f docker-compose.dev.yml up --build -d
+
+# Development URLs:
+# Client: http://localhost:5173
+# Admin: http://localhost:5174
+# API: http://localhost:4000
+# Mongo Express: http://localhost:8081
+# Redis Commander: http://localhost:8082
+```
+
+#### **📊 Analytics Stack Deployment**
+
+```bash
+# Deploy with Elasticsearch and Kibana
+./scripts/deploy.sh analytics
+
+# Access analytics:
+# Kibana: http://localhost:5601
+# Elasticsearch: http://localhost:9200
+```
+
+### **10.2 Environment Configuration**
+
+#### **Required Environment Variables**
+
+```env
+# Application Configuration
+NODE_ENV=production
+PORT=4000
+FRONTEND_URL=https://your-domain.com
+ADMIN_URL=https://your-domain.com/admin
+
+# Database Configuration
+MONGODB_URI=mongodb://admin:password@mongodb:27017/face_recognition_db?authSource=admin
+REDIS_URL=redis://:password@redis:6379
+
+# Security Configuration
+JWT_SECRET=your-super-secure-jwt-secret-minimum-32-characters
+SESSION_SECRET=your-session-secret-key
+
+# ImageKit Configuration
+IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
+IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_id
+
+# Email Configuration (Optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+```
+
+### **10.3 Cloud Platform Deployment**
+
+#### **☁️ DigitalOcean Droplet Deployment**
+
+```bash
+# Create Ubuntu 22.04 droplet (minimum 4GB RAM)
+# SSH into droplet
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Deploy application
+git clone https://github.com/AAYUSH412/Face-Recognition-Attendance-System.git
+cd Face-Recognition-Attendance-System
+cp .env.example .env
+# Configure environment variables
+
+./scripts/deploy.sh prod
+```
+
+#### **🚀 AWS EC2 Deployment**
+
+```bash
+# Launch Ubuntu 22.04 EC2 instance (t3.medium recommended)
+# Configure Security Groups: HTTP (80), HTTPS (443), SSH (22), API (4000)
+
+# SSH into instance
+ssh -i your-key.pem ubuntu@your-instance-ip
+
+# Install Docker and deploy
+sudo apt update
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+sudo usermod -aG docker ubuntu
+
+# Clone and deploy
+git clone https://github.com/AAYUSH412/Face-Recognition-Attendance-System.git
+cd Face-Recognition-Attendance-System
+cp .env.example .env
+# Configure environment
+
+./scripts/deploy.sh prod
+```
+
+#### **🌊 Railway Deployment**
+
+1. **Fork the repository** on GitHub
+2. **Connect to Railway**: https://railway.app/
+3. **Import repository** from GitHub
+4. **Add environment variables** in Railway dashboard
+5. **Deploy automatically** - Railway handles Docker build
+
+### **10.4 SSL/HTTPS Configuration**
+
+#### **Let's Encrypt SSL (Free)**
+
+```bash
+# Install Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obtain SSL certificate
+sudo certbot --nginx -d your-domain.com
+
+# Auto-renewal setup
+sudo crontab -e
+# Add: 0 12 * * * /usr/bin/certbot renew --quiet
+```
+
+#### **Custom SSL Certificate**
+
+```bash
+# Place certificates in docker/ssl/
+mkdir -p docker/ssl/
+cp your-cert.pem docker/ssl/cert.pem
+cp your-key.pem docker/ssl/key.pem
+
+# Update nginx configuration to use SSL
+# Enable SSL profile in docker-compose
+docker-compose --profile ssl up -d
+```
+
+### **10.5 Monitoring & Maintenance**
+
+#### **Health Monitoring**
+
+```bash
+# Check application health
+curl http://your-domain.com/health
+
+# Monitor container status
+docker-compose ps
+
+# View application logs
+./scripts/deploy.sh logs
+
+# Monitor system resources
+docker stats
+```
+
+#### **Database Backup**
+
+```bash
+# Create database backup
+./scripts/deploy.sh backup
+
+# Manual backup
+docker exec fras-mongodb mongodump --archive --gzip --db face_recognition_db > backup_$(date +%Y%m%d).gz
+```
+
+#### **Update Deployment**
+
+```bash
+# Pull latest changes
+git pull origin main
+
+# Rebuild and redeploy
+docker-compose up --build -d
+
+# Clean up old images
+docker image prune -f
+```
+
+### **10.6 Production Checklist**
+
+#### **Security Checklist**
+- ✅ Change default passwords
+- ✅ Configure JWT secrets
+- ✅ Setup SSL/HTTPS
+- ✅ Configure firewall rules
+- ✅ Enable rate limiting
+- ✅ Setup monitoring alerts
+
+#### **Performance Checklist**
+- ✅ Configure database indexes
+- ✅ Setup Redis caching
+- ✅ Enable gzip compression
+- ✅ Configure CDN (optional)
+- ✅ Setup log rotation
+- ✅ Monitor resource usage
+
+#### **Backup Checklist**
+- ✅ Database backup schedule
+- ✅ File storage backup
+- ✅ Configuration backup
+- ✅ Recovery testing
+- ✅ Backup retention policy
+
+### **10.7 Troubleshooting**
+
+#### **Common Issues**
+
+| Issue | Solution |
+|-------|----------|
+| Containers won't start | Check environment variables in `.env` |
+| Database connection failed | Verify MongoDB URI and credentials |
+| Face recognition not working | Check camera permissions and HTTPS |
+| High memory usage | Increase server resources or optimize containers |
+| SSL certificate errors | Verify certificate paths and permissions |
+
+#### **Debug Commands**
+
+```bash
+# Check container logs
+docker-compose logs [service-name]
+
+# Access container shell
+docker-compose exec [service-name] sh
+
+# Check network connectivity
+docker-compose exec app curl http://mongodb:27017
+
+# Monitor resource usage
+docker stats --no-stream
+```
 git push heroku main
 ```
 

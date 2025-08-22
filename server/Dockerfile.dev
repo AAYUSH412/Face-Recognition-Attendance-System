@@ -1,0 +1,38 @@
+# Development Dockerfile for Node.js Server
+# Created by Aayush Vaghela (https://github.com/AAYUSH412)
+
+FROM node:18-alpine
+
+LABEL maintainer="Aayush Vaghela <https://github.com/AAYUSH412>"
+LABEL description="Face Recognition Attendance System - Server Development Environment"
+
+# Install development tools
+RUN apk add --no-cache curl git
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies including dev dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Create uploads directory
+RUN mkdir -p uploads
+
+# Expose port
+EXPOSE 4000
+
+# Install nodemon globally for development
+RUN npm install -g nodemon
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:4000/api/health || exit 1
+
+# Start development server
+CMD ["npm", "run", "dev"]

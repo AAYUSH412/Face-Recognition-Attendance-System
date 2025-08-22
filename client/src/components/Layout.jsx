@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext'
 // Update the navigation array to include Events
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon, description: 'Overview of your attendance' },
-  { name: 'Mark Attendance', href: '/mark-attendance', icon: ClipboardDocumentCheckIcon, description: 'Check in or check out manually' },
+  { name: 'Mark Attendance', href: '/attendance', icon: ClipboardDocumentCheckIcon, description: 'Face, Manual, or QR attendance' },
   { name: 'Attendance History', href: '/history', icon: ClockIcon, description: 'View past attendance records' },
   { name: 'Events', href: '/events', icon: CalendarIcon, description: 'View and join events' },
   { name: 'Profile', href: '/profile', icon: UserIcon, description: 'Manage your account' },

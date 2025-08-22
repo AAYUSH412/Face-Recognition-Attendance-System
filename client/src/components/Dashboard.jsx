@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api.js';
 import { format, parseISO, isToday, subDays } from 'date-fns';
 import { 
   CameraIcon, 
@@ -44,7 +44,7 @@ const Dashboard = () => {
       const startDate = last30Days.toISOString().split('T')[0];
       const endDate = today.toISOString().split('T')[0];
       
-      const response = await axios.get(`/api/attendance/me?startDate=${startDate}&endDate=${endDate}`);
+      const response = await api.get(`/api/attendance/me?startDate=${startDate}&endDate=${endDate}`);
       
       // Handle both array response format and object with records property
       let attendanceData = [];
@@ -107,97 +107,87 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Demo Notice */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-yellow-800">Demo Version</h3>
-            <div className="mt-1 text-sm text-yellow-700">
-              <p>This is a simplified demo version with manual attendance. The full version includes face recognition and advanced features.</p>
+        {/* Greeting Section */}
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl text-white p-6 shadow-lg">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">
+                Welcome back, {currentUser?.name?.split(' ')[0]}!
+              </h1>
+              <p className="mt-2 text-indigo-100">
+                {new Date().toLocaleDateString(undefined, { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
             </div>
+            <button 
+              onClick={handleRefresh} 
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors duration-200"
+              disabled={refreshing}
+            >
+              <ArrowPathIcon className={`h-5 w-5 text-white ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
           </div>
-        </div>
-      </div>
-
-      {/* Greeting Section */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl text-white p-6 shadow-lg">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">
-              Welcome back, {currentUser?.name?.split(' ')[0]}!
-            </h1>
-            <p className="mt-2 text-indigo-100">
-              {new Date().toLocaleDateString(undefined, { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </p>
+          
+          {/* Quick Actions */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="/attendance"
+              className="flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
+            >
+              <ClipboardDocumentCheckIcon className="h-5 w-5 mr-2" />
+              Mark Attendance
+            </Link>
+            <Link
+              to="/history"
+              className="flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
+            >
+              <ClockIcon className="h-5 w-5 mr-2" />
+              View History
+            </Link>
+            <Link
+              to="/events"
+              className="flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
+            >
+              <CalendarIcon className="h-5 w-5 mr-2" />
+              Events
+            </Link>
+            <Link
+              to="/profile"
+              className="flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
+            >
+              <UserIcon className="h-5 w-5 mr-2" />
+              Profile
+            </Link>
           </div>
-          <button 
-            onClick={handleRefresh} 
-            className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors duration-200"
-            disabled={refreshing}
-          >
-            <ArrowPathIcon className={`h-5 w-5 text-white ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
         </div>
         
-        {/* Quick Actions */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            to="/mark-attendance"
-            className="flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
-          >
-            <ClipboardDocumentCheckIcon className="h-5 w-5 mr-2" />
-            Mark Attendance
-          </Link>
-          <Link
-            to="/history"
-            className="flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
-          >
-            <ClockIcon className="h-5 w-5 mr-2" />
-            View History
-          </Link>
-          <Link
-            to="/profile"
-            className="flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
-          >
-            <UserIcon className="h-5 w-5 mr-2" />
-            Profile
-          </Link>
-        </div>
-      </div>
-      
-      {/* Today's Status Card */}
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900 flex items-center">
-            <CalendarIcon className="h-5 w-5 mr-2 text-indigo-600" />
-            Today's Attendance Status
-          </h2>
-        </div>
-        
-        <div className="p-6">
-          {loading ? (
-            <div className="py-8 flex justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : todayAttendance ? (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                <div className="flex items-center">
-                  <div className={`rounded-full p-2 mr-3 ${
-                    todayAttendance.status === 'present' ? 'bg-green-100 text-green-700' : 
-                    todayAttendance.status === 'late' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
+        {/* Today's Status Card */}
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <CalendarIcon className="h-5 w-5 mr-2 text-indigo-600" />
+              Today's Attendance Status
+            </h2>
+          </div>
+          
+          <div className="p-6">
+            {loading ? (
+              <div className="py-8 flex justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : todayAttendance ? (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <div className="flex items-center">
+                    <div className={`rounded-full p-2 mr-3 ${
+                      todayAttendance.status === 'present' ? 'bg-green-100 text-green-700' : 
+                      todayAttendance.status === 'late' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
                     {todayAttendance.status === 'present' ? (
                       <CheckCircleIcon className="h-6 w-6" />
                     ) : todayAttendance.status === 'late' ? (
@@ -278,7 +268,7 @@ const Dashboard = () => {
               
               <div className="flex justify-center">
                 <Link
-                  to="/mark-attendance"
+                  to="/attendance"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <CameraIcon className="h-5 w-5 mr-2" />
@@ -299,7 +289,7 @@ const Dashboard = () => {
               </p>
               <div className="mt-6">
                 <Link
-                  to="/mark-attendance"
+                  to="/attendance"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <CameraIcon className="h-5 w-5 mr-2" />

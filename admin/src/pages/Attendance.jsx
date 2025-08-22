@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -18,6 +18,13 @@ import {
   AdjustmentsHorizontalIcon,
   InformationCircleIcon,
   BuildingOfficeIcon,
+  PencilIcon,
+  TrashIcon,
+  PlusIcon,
+  EyeIcon,
+  PhotoIcon,
+  MapPinIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 const Attendance = () => {
@@ -39,88 +46,63 @@ const Attendance = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [departments, setDepartments] = useState([]);
-  const [expandedRecord, setExpandedRecord] = useState(null);
   const [showFilters, setShowFilters] = useState(true);
-  const [activeRecordActions, setActiveRecordActions] = useState(null);
+  const [selectedRecords, setSelectedRecords] = useState([]);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentRecord, setCurrentRecord] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    present: 0,
+    late: 0,
+    absent: 0,
+    pendingVerification: 0,
+  });
 
-  useEffect(() => {
-    fetchAttendanceRecords();
-    fetchDepartments();
-  }, [currentPage, dateRange, filter]);
-
-  // Fetch attendance records and departments functions - unchanged
-
-  const fetchAttendanceRecords = async () => {
+  const fetchAttendanceRecords = useCallback(async () => {
     setLoading(true);
     try {
-      // In a real implementation, you would use query params for pagination and filtering
-      const response = await axios.get(
-        `/api/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
-      );
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 10,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      });
 
-      // Access the records array from the response
-      let filteredRecords = response.data.records || [];
+      if (filter.status) params.append("status", filter.status);
+      if (filter.verification) params.append("verification", filter.verification);
+      if (filter.department) params.append("departmentId", filter.department);
 
-      // Apply filters
-      if (filter.status) {
-        filteredRecords = filteredRecords.filter(
-          (record) => record.status === filter.status
-        );
-      }
-
-      if (filter.verification === "verified") {
-        filteredRecords = filteredRecords.filter(
-          (record) =>
-            (record.checkIn?.verified || !record.checkIn?.time) &&
-            (record.checkOut?.verified || !record.checkOut?.time)
-        );
-      } else if (filter.verification === "unverified") {
-        filteredRecords = filteredRecords.filter(
-          (record) =>
-            (!record.checkIn?.verified && record.checkIn?.time) ||
-            (!record.checkOut?.verified && record.checkOut?.time)
-        );
-      }
-
-      if (filter.department) {
-        filteredRecords = filteredRecords.filter(
-          (record) => record.user.department?._id === filter.department
-        );
-      }
-
-      if (searchTerm) {
-        filteredRecords = filteredRecords.filter(
-          (record) =>
-            record.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            record.user.email
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            record.user.registrationId
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase())
-        );
-      }
-
-      // Simple pagination (client-side for demo)
-      const itemsPerPage = 10;
-      const totalItems = filteredRecords.length;
-      const pages = Math.ceil(totalItems / itemsPerPage);
-
-      setTotalPages(pages || 1);
-
-      // Get current page items
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const paginatedRecords = filteredRecords.slice(
-        startIndex,
-        startIndex + itemsPerPage
-      );
-
-      setAttendanceRecords(paginatedRecords);
+      const response = await axios.get(`/api/attendance?${params.toString()}`);
+      
+      setAttendanceRecords(response.data.records || []);
+      setTotalPages(response.data.pagination?.pages || 1);
     } catch (error) {
       console.error("Error fetching attendance records:", error);
       toast.error("Failed to load attendance records");
     } finally {
       setLoading(false);
+    }
+  }, [currentPage, dateRange, filter]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `/api/attendance/admin/stats?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+      );
+      setStats(response.data);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }, [dateRange]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get("/api/users");
+      setUsers(response.data.users || []);
+    } catch (error) {
+      console.error("Error fetching users:", error);
     }
   };
 
@@ -132,6 +114,13 @@ const Attendance = () => {
       console.error("Error fetching departments:", error);
     }
   };
+
+  useEffect(() => {
+    fetchAttendanceRecords();
+    fetchDepartments();
+    fetchUsers();
+    fetchStats();
+  }, [fetchAttendanceRecords, fetchStats]);
 
   // Other handlers and methods - unchanged
 
@@ -211,6 +200,106 @@ const Attendance = () => {
       console.error(`Error rejecting ${type}:`, error);
       toast.error(`Failed to reject ${type}`);
     }
+  };
+
+  const handleDeleteRecord = async (recordId) => {
+    if (!window.confirm("Are you sure you want to delete this attendance record?"))
+      return;
+
+    try {
+      await axios.delete(`/api/attendance/${recordId}`);
+      toast.success("Attendance record deleted successfully");
+      
+      // Remove record from UI
+      setAttendanceRecords((records) =>
+        records.filter((record) => record._id !== recordId)
+      );
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      toast.error("Failed to delete attendance record");
+    }
+  };
+
+  const handleBulkAction = async (action) => {
+    if (selectedRecords.length === 0) {
+      toast.error("Please select records to perform bulk action");
+      return;
+    }
+
+    try {
+      const promises = selectedRecords.map(recordId => {
+        switch (action) {
+          case 'verify-checkin':
+            return axios.patch(`/api/attendance/${recordId}/verify`, { type: 'checkIn' });
+          case 'verify-checkout':
+            return axios.patch(`/api/attendance/${recordId}/verify`, { type: 'checkOut' });
+          case 'delete':
+            return axios.delete(`/api/attendance/${recordId}`);
+          default:
+            return Promise.resolve();
+        }
+      });
+
+      await Promise.all(promises);
+      toast.success(`Bulk ${action} completed successfully`);
+      
+      // Refresh data
+      fetchAttendanceRecords();
+      setSelectedRecords([]);
+    } catch (error) {
+      console.error("Error performing bulk action:", error);
+      toast.error(`Failed to perform bulk ${action}`);
+    }
+  };
+
+  const handleSelectRecord = (recordId) => {
+    setSelectedRecords(prev => 
+      prev.includes(recordId) 
+        ? prev.filter(id => id !== recordId)
+        : [...prev, recordId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRecords.length === attendanceRecords.length) {
+      setSelectedRecords([]);
+    } else {
+      setSelectedRecords(attendanceRecords.map(record => record._id));
+    }
+  };
+
+  const openDetailModal = (record) => {
+    setCurrentRecord(record);
+    setShowDetailModal(true);
+  };
+
+  const handleCreateManualAttendance = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    try {
+      const data = {
+        userId: formData.get('userId'),
+        date: formData.get('date'),
+        status: formData.get('status'),
+        checkInTime: formData.get('checkInTime') || null,
+        checkOutTime: formData.get('checkOutTime') || null,
+        notes: formData.get('notes') || ''
+      };
+
+      await axios.post('/api/attendance/admin/create', data);
+      toast.success("Manual attendance record created successfully");
+      setShowCreateModal(false);
+      fetchAttendanceRecords(); // Refresh the list
+    } catch (error) {
+      console.error("Error creating manual attendance:", error);
+      toast.error(error.response?.data?.message || "Failed to create attendance record");
+    }
+  };
+
+  const closeDetailModal = () => {
+    setCurrentRecord(null);
+    setShowDetailModal(false);
   };
 
   const exportToCSV = async () => {
@@ -297,6 +386,15 @@ const Attendance = () => {
         <div className="mt-4 sm:mt-0 flex space-x-3">
           <button
             type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+          >
+            <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+            Add Record
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowFilters(!showFilters)}
             className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
           >
@@ -315,6 +413,118 @@ const Attendance = () => {
             />
             Export to CSV
           </button>
+        </div>
+      </div>
+
+      {/* Statistics Dashboard */}
+      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <UserGroupIcon className="h-6 w-6 text-gray-400" aria-hidden="true" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Total Records
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.total || 0}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-6 w-6 text-green-400" aria-hidden="true" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Present
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.present || 0}
+                    <span className="ml-2 text-sm text-green-600">
+                      ({stats.presentPercentage || 0}%)
+                    </span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <ClockIcon className="h-6 w-6 text-yellow-400" aria-hidden="true" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Late
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.late || 0}
+                    <span className="ml-2 text-sm text-yellow-600">
+                      ({stats.latePercentage || 0}%)
+                    </span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <XCircleIcon className="h-6 w-6 text-red-400" aria-hidden="true" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Absent
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.absent || 0}
+                    <span className="ml-2 text-sm text-red-600">
+                      ({stats.absentPercentage || 0}%)
+                    </span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <InformationCircleIcon className="h-6 w-6 text-purple-400" aria-hidden="true" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Pending
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.pendingVerification || 0}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -344,7 +554,7 @@ const Attendance = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="startDate"
-                className="block text-sm font-medium text-gray-700 flex items-center"
+                className="text-sm font-medium text-gray-700 flex items-center"
               >
                 <CalendarIcon className="h-4 w-4 mr-1 text-gray-500" />
                 Start Date
@@ -362,7 +572,7 @@ const Attendance = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="endDate"
-                className="block text-sm font-medium text-gray-700 flex items-center"
+                className="text-sm font-medium text-gray-700 flex items-center"
               >
                 <CalendarIcon className="h-4 w-4 mr-1 text-gray-500" />
                 End Date
@@ -380,7 +590,7 @@ const Attendance = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="department"
-                className="block text-sm font-medium text-gray-700 flex items-center"
+                className="text-sm font-medium text-gray-700 flex items-center"
               >
                 <BuildingOfficeIcon className="h-4 w-4 mr-1 text-gray-500" />
                 Department
@@ -538,6 +748,53 @@ const Attendance = () => {
         </div>
       )}
 
+      {/* Bulk Actions */}
+      {selectedRecords.length > 0 && (
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2" />
+              <span className="text-sm font-medium text-blue-900">
+                {selectedRecords.length} record(s) selected
+              </span>
+            </div>
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => handleBulkAction('verify-checkin')}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <CheckIcon className="h-4 w-4 mr-1" />
+                Verify Check-ins
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkAction('verify-checkout')}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <CheckIcon className="h-4 w-4 mr-1" />
+                Verify Check-outs
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkAction('delete')}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <TrashIcon className="h-4 w-4 mr-1" />
+                Delete
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRecords([])}
+                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Attendance List */}
       <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
         {loading ? (
@@ -553,6 +810,14 @@ const Attendance = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th scope="col" className="relative px-6 py-3">
+                    <input
+                      type="checkbox"
+                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      checked={selectedRecords.length === attendanceRecords.length && attendanceRecords.length > 0}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -596,13 +861,19 @@ const Attendance = () => {
                   <tr
                     key={record._id}
                     className={
-                      expandedRecord === record._id
-                        ? "bg-purple-50"
+                      selectedRecords.includes(record._id)
+                        ? "bg-blue-50"
                         : "hover:bg-gray-50 transition-colors duration-150"
                     }
-                    onMouseEnter={() => setActiveRecordActions(record._id)}
-                    onMouseLeave={() => setActiveRecordActions(null)}
                   >
+                    <td className="relative px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        checked={selectedRecords.includes(record._id)}
+                        onChange={() => handleSelectRecord(record._id)}
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -718,49 +989,69 @@ const Attendance = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex space-x-2">
+                      <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={() =>
-                            setExpandedRecord(
-                              expandedRecord === record._id ? null : record._id
-                            )
-                          }
-                          className={`text-purple-600 hover:text-purple-900 transition-colors ${
-                            expandedRecord === record._id ? "font-medium" : ""
-                          }`}
+                          onClick={() => openDetailModal(record)}
+                          className="text-purple-600 hover:text-purple-900 transition-colors p-1 rounded hover:bg-purple-50"
+                          title="View Details"
                         >
-                          {expandedRecord === record._id
-                            ? "Hide Details"
-                            : "View Details"}
+                          <EyeIcon className="h-4 w-4" />
                         </button>
 
-                        {/* Extra actions that appear on hover */}
-                        {activeRecordActions === record._id &&
-                          !record.checkIn?.verified &&
-                          record.checkIn?.time && (
-                            <button
-                              onClick={() =>
-                                handleVerifyAttendance(record._id, "checkIn")
-                              }
-                              className="text-green-600 hover:text-green-800 transition-colors"
-                            >
-                              Verify In
-                            </button>
-                          )}
+                        <button
+                          type="button"
+                          onClick={() => setCurrentRecord(record)}
+                          className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded hover:bg-blue-50"
+                          title="Edit Record"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
 
-                        {activeRecordActions === record._id &&
-                          !record.checkOut?.verified &&
-                          record.checkOut?.time && (
-                            <button
-                              onClick={() =>
-                                handleVerifyAttendance(record._id, "checkOut")
-                              }
-                              className="text-green-600 hover:text-green-800 transition-colors"
-                            >
-                              Verify Out
-                            </button>
-                          )}
+                        {!record.checkIn?.verified && record.checkIn?.time && (
+                          <button
+                            onClick={() =>
+                              handleVerifyAttendance(record._id, "checkIn")
+                            }
+                            className="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-50"
+                            title="Verify Check-in"
+                          >
+                            <CheckIcon className="h-4 w-4" />
+                          </button>
+                        )}
+
+                        {!record.checkOut?.verified && record.checkOut?.time && (
+                          <button
+                            onClick={() =>
+                              handleVerifyAttendance(record._id, "checkOut")
+                            }
+                            className="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-50"
+                            title="Verify Check-out"
+                          >
+                            <CheckIcon className="h-4 w-4" />
+                          </button>
+                        )}
+
+                        {record.checkIn?.time && !record.checkIn?.verified && (
+                          <button
+                            onClick={() =>
+                              handleRejectAttendance(record._id, "checkIn")
+                            }
+                            className="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
+                            title="Reject Check-in"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRecord(record._id)}
+                          className="text-red-600 hover:text-red-900 transition-colors p-1 rounded hover:bg-red-50"
+                          title="Delete Record"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -836,6 +1127,376 @@ const Attendance = () => {
           </nav>
         )}
       </div>
+
+      {/* Create Manual Attendance Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <form onSubmit={handleCreateManualAttendance}>
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      Create Manual Attendance Record
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <XMarkIcon className="h-6 w-6" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        User
+                      </label>
+                      <select
+                        name="userId"
+                        required
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      >
+                        <option value="">Select a user</option>
+                        {users.map((user) => (
+                          <option key={user._id} value={user._id}>
+                            {user.name} ({user.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Date
+                      </label>
+                      <input
+                        name="date"
+                        type="date"
+                        required
+                        defaultValue={format(new Date(), "yyyy-MM-dd")}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
+                      <select
+                        name="status"
+                        required
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      >
+                        <option value="present">Present</option>
+                        <option value="late">Late</option>
+                        <option value="absent">Absent</option>
+                        <option value="half-day">Half Day</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Check-in Time
+                      </label>
+                      <input
+                        name="checkInTime"
+                        type="time"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Check-out Time
+                      </label>
+                      <input
+                        name="checkOutTime"
+                        type="time"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Notes (Optional)
+                      </label>
+                      <textarea
+                        name="notes"
+                        rows={3}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        placeholder="Add any additional notes..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="submit"
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Create Record
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {showDetailModal && currentRecord && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Attendance Record Details
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={closeDetailModal}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* User Information */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">User Information</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-medium mr-3">
+                          {currentRecord.user?.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{currentRecord.user?.name}</p>
+                          <p className="text-sm text-gray-500">{currentRecord.user?.email}</p>
+                          <p className="text-xs text-gray-500 capitalize">{currentRecord.user?.role}</p>
+                        </div>
+                      </div>
+                      {currentRecord.user?.department && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <BuildingOfficeIcon className="h-4 w-4 mr-2" />
+                          {currentRecord.user.department.name}
+                        </div>
+                      )}
+                      {currentRecord.user?.registrationId && (
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">ID:</span> {currentRecord.user.registrationId}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Basic Information */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Record Information</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Date:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {new Date(currentRecord.date).toLocaleDateString(undefined, {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Status:</span>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClasses(currentRecord.status)}`}>
+                          {getStatusIcon(currentRecord.status)}
+                          <span className="ml-1 capitalize">{currentRecord.status}</span>
+                        </span>
+                      </div>
+                      {currentRecord.hoursWorked && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Hours Worked:</span>
+                          <span className="text-sm font-medium text-gray-900">{currentRecord.hoursWorked} hrs</span>
+                        </div>
+                      )}
+                      {currentRecord.location && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Location:</span>
+                          <span className="text-sm font-medium text-gray-900 flex items-center">
+                            <MapPinIcon className="h-4 w-4 mr-1" />
+                            {currentRecord.location}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Check-in Details */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Check-in Details</h4>
+                    {currentRecord.checkIn?.time ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Time:</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {new Date(currentRecord.checkIn.time).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Method:</span>
+                          <span className="text-sm font-medium text-gray-900 capitalize">
+                            {currentRecord.checkIn.method || 'face_recognition'}
+                          </span>
+                        </div>
+                        {currentRecord.checkIn.confidence && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Confidence:</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {(currentRecord.checkIn.confidence * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Verified:</span>
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            currentRecord.checkIn.verified 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {currentRecord.checkIn.verified ? 'Yes' : 'Pending'}
+                          </span>
+                        </div>
+                        {currentRecord.checkIn.imageUrl && (
+                          <div>
+                            <span className="text-sm text-gray-600 block mb-2">Image:</span>
+                            <img 
+                              src={currentRecord.checkIn.imageUrl} 
+                              alt="Check-in" 
+                              className="w-20 h-20 object-cover rounded-lg border"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No check-in recorded</p>
+                    )}
+                  </div>
+
+                  {/* Check-out Details */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Check-out Details</h4>
+                    {currentRecord.checkOut?.time ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Time:</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {new Date(currentRecord.checkOut.time).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Method:</span>
+                          <span className="text-sm font-medium text-gray-900 capitalize">
+                            {currentRecord.checkOut.method || 'face_recognition'}
+                          </span>
+                        </div>
+                        {currentRecord.checkOut.confidence && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Confidence:</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {(currentRecord.checkOut.confidence * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Verified:</span>
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            currentRecord.checkOut.verified 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {currentRecord.checkOut.verified ? 'Yes' : 'Pending'}
+                          </span>
+                        </div>
+                        {currentRecord.checkOut.imageUrl && (
+                          <div>
+                            <span className="text-sm text-gray-600 block mb-2">Image:</span>
+                            <img 
+                              src={currentRecord.checkOut.imageUrl} 
+                              alt="Check-out" 
+                              className="w-20 h-20 object-cover rounded-lg border"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No check-out recorded</p>
+                    )}
+                  </div>
+                </div>
+
+                {currentRecord.notes && (
+                  <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Notes</h4>
+                    <p className="text-sm text-gray-600">{currentRecord.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={closeDetailModal}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Close
+                </button>
+                {!currentRecord.checkIn?.verified && currentRecord.checkIn?.time && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleVerifyAttendance(currentRecord._id, "checkIn");
+                      closeDetailModal();
+                    }}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Verify Check-in
+                  </button>
+                )}
+                {!currentRecord.checkOut?.verified && currentRecord.checkOut?.time && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleVerifyAttendance(currentRecord._id, "checkOut");
+                      closeDetailModal();
+                    }}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Verify Check-out
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

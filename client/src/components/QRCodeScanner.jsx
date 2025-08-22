@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
+import api from '../utils/api.js';
 import toast from 'react-hot-toast';
 import {
   QrCodeIcon,
@@ -93,7 +93,7 @@ const QRCodeScanner = () => {
   const processQrCode = async (qrData) => {
     setProcessing(true);
     try {
-      const response = await axios.post('/api/events/verify-attendance', { 
+      const response = await api.post('/api/events/verify-attendance', { 
         qrCodeData: qrData 
       });
       

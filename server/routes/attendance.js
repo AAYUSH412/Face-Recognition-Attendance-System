@@ -347,6 +347,176 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/attendance/admin/create
+// @desc    Create attendance record manually (admin only)
+// @access  Private/Admin
+router.post('/admin/create', adminAuth, async (req, res) => {
+  try {
+    const { userId, date, status, checkInTime, checkOutTime, notes } = req.body;
+    
+    if (!userId || !date || !status) {
+      return res.status(400).json({ 
+        message: 'User ID, date, and status are required' 
+      });
+    }
+    
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Parse the date to start of day
+    const recordDate = new Date(date);
+    recordDate.setHours(0, 0, 0, 0);
+    
+    // Check if attendance record already exists for this date
+    const existingRecord = await Attendance.findOne({
+      user: userId,
+      date: {
+        $gte: recordDate,
+        $lt: new Date(recordDate.getTime() + 24 * 60 * 60 * 1000)
+      }
+    });
+    
+    if (existingRecord) {
+      return res.status(400).json({ 
+        message: 'Attendance record already exists for this date' 
+      });
+    }
+    
+    // Create attendance object
+    const attendanceData = {
+      user: userId,
+      date: recordDate,
+      status: status,
+      method: 'manual',
+      notes: notes || '',
+      verifiedBy: req.user.id
+    };
+    
+    // Add check-in data if provided
+    if (checkInTime) {
+      const checkInDateTime = new Date(recordDate);
+      const [hours, minutes] = checkInTime.split(':');
+      checkInDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      attendanceData.checkIn = {
+        time: checkInDateTime,
+        method: 'manual',
+        confidence: 100,
+        verified: true,
+        location: 'Admin Entry'
+      };
+    }
+    
+    // Add check-out data if provided
+    if (checkOutTime) {
+      const checkOutDateTime = new Date(recordDate);
+      const [hours, minutes] = checkOutTime.split(':');
+      checkOutDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      attendanceData.checkOut = {
+        time: checkOutDateTime,
+        method: 'manual',
+        confidence: 100,
+        verified: true,
+        location: 'Admin Entry'
+      };
+      
+      // Calculate hours worked if both times are provided
+      if (checkInTime) {
+        const hoursWorked = (checkOutDateTime - attendanceData.checkIn.time) / (1000 * 60 * 60);
+        attendanceData.hoursWorked = parseFloat(hoursWorked.toFixed(2));
+      }
+    }
+    
+    const attendance = new Attendance(attendanceData);
+    await attendance.save();
+    
+    // Populate user data for response
+    await attendance.populate('user', 'name email registrationId');
+    
+    res.status(201).json({
+      message: 'Attendance record created successfully',
+      attendance
+    });
+    
+  } catch (error) {
+    console.error('Error creating manual attendance record:', error);
+    res.status(500).json({ 
+      message: 'Failed to create attendance record',
+      error: error.message 
+    });
+  }
+});
+
+// @route   GET api/attendance/admin/stats
+// @desc    Get attendance statistics for admin dashboard
+// @access  Private/Admin
+router.get('/admin/stats', adminAuth, async (req, res) => {
+  try {
+    const { startDate, endDate, departmentId } = req.query;
+    
+    let filter = {};
+    
+    // Date filter
+    if (startDate && endDate) {
+      filter.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    // Department filter
+    if (departmentId) {
+      const usersInDepartment = await User.find({ department: departmentId }).select('_id');
+      const userIds = usersInDepartment.map(user => user._id);
+      filter.user = { $in: userIds };
+    }
+    
+    const allAttendance = await Attendance.find(filter);
+    
+    // Calculate statistics
+    const totalRecords = allAttendance.length;
+    const presentCount = allAttendance.filter(a => a.status === 'present').length;
+    const lateCount = allAttendance.filter(a => a.status === 'late').length;
+    const absentCount = allAttendance.filter(a => a.status === 'absent').length;
+    const halfDayCount = allAttendance.filter(a => a.status === 'half-day').length;
+    
+    // Calculate pending verification count
+    const pendingVerificationCount = allAttendance.filter(a => 
+      (!a.checkIn?.verified && a.checkIn?.time) ||
+      (!a.checkOut?.verified && a.checkOut?.time)
+    ).length;
+    
+    // Calculate average hours worked
+    const recordsWithHours = allAttendance.filter(a => a.hoursWorked);
+    const totalHours = recordsWithHours.reduce((sum, record) => sum + (record.hoursWorked || 0), 0);
+    const averageHours = recordsWithHours.length ? (totalHours / recordsWithHours.length).toFixed(2) : 0;
+    
+    // Get unique users count
+    const uniqueUsers = new Set(allAttendance.map(a => a.user.toString())).size;
+    
+    res.json({
+      total: totalRecords,
+      present: presentCount,
+      late: lateCount,
+      absent: absentCount,
+      halfDay: halfDayCount,
+      pendingVerification: pendingVerificationCount,
+      presentPercentage: totalRecords ? ((presentCount / totalRecords) * 100).toFixed(2) : 0,
+      latePercentage: totalRecords ? ((lateCount / totalRecords) * 100).toFixed(2) : 0,
+      absentPercentage: totalRecords ? ((absentCount / totalRecords) * 100).toFixed(2) : 0,
+      averageHoursWorked: averageHours,
+      activeUsers: uniqueUsers
+    });
+  } catch (error) {
+    console.error('Get admin attendance stats error:', error.message);
+    res.status(500).json({ message: 'Server error fetching admin attendance statistics' });
+  }
+});
+
 // @route   GET api/attendance/stats
 // @desc    Get attendance statistics for the current user
 // @access  Private

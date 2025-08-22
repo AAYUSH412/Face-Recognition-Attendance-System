@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import compression from 'compression';
+import hometemplate from './utils/hometempate.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -43,9 +44,16 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/demo', demoRoutes);
 
-// Root route
+// Home page
 app.get('/', (req, res) => {
-  res.send('Face Recognition Attendance System API is running');
+  try {
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(hometemplate());
+  } catch (error) {
+    console.error('Error serving home page:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Start server

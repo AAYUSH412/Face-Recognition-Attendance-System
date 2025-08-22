@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api.js';
 import { format, startOfMonth, endOfMonth, parseISO, isValid, subMonths } from 'date-fns';
-import { CheckCircleIcon, XCircleIcon, ClockIcon, CalendarIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon, ClockIcon, CalendarIcon, ArrowPathIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 const AttendanceHistory = () => {
@@ -15,13 +15,14 @@ const AttendanceHistory = () => {
 
   useEffect(() => {
     fetchAttendance();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange]);
 
   const fetchAttendance = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`/api/attendance/me?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`);
+      const response = await api.get(`/api/attendance/me?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`);
       
       // Handle both array response format and object with records property
       let attendanceData = [];
@@ -106,27 +107,27 @@ const AttendanceHistory = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Attendance History</h1>
-      
-      {/* Date Filter */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-          <h2 className="text-lg font-medium text-gray-900">Filter by Date</h2>
-          <div className="mt-2 md:mt-0 flex space-x-2">
-            <button
-              onClick={setThisMonth}
-              className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              This Month
-            </button>
-            <button
-              onClick={setLastMonth}
-              className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Last Month
-            </button>
-            <button
-              onClick={fetchAttendance}
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Attendance History</h1>
+        
+        {/* Date Filter */}
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+            <h2 className="text-lg font-medium text-gray-900">Filter by Date</h2>
+            <div className="mt-2 md:mt-0 flex space-x-2">
+              <button
+                onClick={setThisMonth}
+                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                This Month
+              </button>
+              <button
+                onClick={setLastMonth}
+                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Last Month
+              </button>
+              <button
+                onClick={fetchAttendance}
               className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               <ArrowPathIcon className="h-4 w-4 mr-1" />

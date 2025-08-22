@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react'
-import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
+import api from '../utils/api.js'
 
 const AuthContext = createContext()
 
@@ -11,18 +11,12 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
   
-  // Set up axios defaults
-  axios.defaults.baseURL = 'http://localhost:4000'
-  
   useEffect(() => {
     const initAuth = async () => {
       try {
         if (token) {
-          // Set the authorization header for all requests
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-          
           // Fetch current user data
-          const response = await axios.get('/api/auth/me')
+          const response = await api.get('/api/auth/me')
           setCurrentUser(response.data)
         }
       } catch (error) {
@@ -42,14 +36,12 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password })
+      const response = await api.post('/api/auth/login', { email, password })
       const { token: newToken, user } = response.data
       
       localStorage.setItem('token', newToken)
       setToken(newToken)
       setCurrentUser(user)
-      
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
       
       return user
     } catch (error) {
@@ -60,14 +52,12 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
-      const response = await axios.post('/api/auth/register', userData)
+      const response = await api.post('/api/auth/register', userData)
       const { token: newToken, user } = response.data
       
       localStorage.setItem('token', newToken)
       setToken(newToken)
       setCurrentUser(user)
-      
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
       
       return user
     } catch (error) {
@@ -80,7 +70,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token')
     setToken(null)
     setCurrentUser(null)
-    delete axios.defaults.headers.common['Authorization']
   }
   
   // Check if token is expired
@@ -90,9 +79,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const decoded = jwtDecode(token)
       return decoded.exp * 1000 < Date.now()
-    } catch (error) {
+    } catch {
       return true
     }
+  }
+
+  // Update user profile
+  const updateUser = (updatedUser) => {
+    setCurrentUser(updatedUser)
   }
   
   const value = {
@@ -101,6 +95,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
     isTokenExpired,
     isAuthenticated: !!token && !isTokenExpired()
   }

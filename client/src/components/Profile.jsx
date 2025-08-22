@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../utils/api.js';
 import toast from 'react-hot-toast';
 import { 
   UserIcon, 
@@ -75,7 +75,7 @@ const Profile = () => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('/api/auth/me');
+        const response = await api.get('/api/auth/me');
         setFaceData(response.data.faceData || []);
         setProfileForm({
           name: response.data.name || '',
@@ -132,7 +132,7 @@ const Profile = () => {
     try {
       const imageSrc = webcamRef.getScreenshot();
       
-      const response = await axios.post('/api/users/face', {
+      const response = await api.post('/api/users/face', {
         base64Image: imageSrc
       });
       
@@ -149,7 +149,7 @@ const Profile = () => {
 
   const deleteFace = async (imageId) => {
     try {
-      await axios.delete(`/api/users/face/${imageId}`);
+      await api.delete(`/api/users/face/${imageId}`);
       setFaceData(faceData.filter(data => data.imageId !== imageId));
       toast.success('Face data removed successfully');
     } catch (error) {
@@ -208,7 +208,7 @@ const Profile = () => {
     
     setChangingPassword(true);
     try {
-      await axios.put('/api/users/password', passwordForm);
+      await api.put('/api/users/password', passwordForm);
       toast.success('Password changed successfully');
       setPasswordForm({
         currentPassword: '',
@@ -256,7 +256,7 @@ const Profile = () => {
         formData.append('profileImage', fileInputRef.current.files[0]);
       }
       
-      await axios.put('/api/users/profile', formData, {
+      await api.put('/api/users/profile', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -274,19 +274,19 @@ const Profile = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Profile Tabs */}
-      <div className="mb-6">
-        <div className="sm:hidden">
-          <select
-            id="tabs"
-            name="tabs"
-            className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-            value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value)}
-          >
-            <option value="profile">Profile Information</option>
-            <option value="face">Face Recognition</option>
-            <option value="security">Security Settings</option>
+        {/* Profile Tabs */}
+        <div className="mb-6">
+          <div className="sm:hidden">
+            <select
+              id="tabs"
+              name="tabs"
+              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+            >
+              <option value="profile">Profile Information</option>
+              <option value="face">Face Recognition</option>
+              <option value="security">Security Settings</option>
           </select>
         </div>
         <div className="hidden sm:block">

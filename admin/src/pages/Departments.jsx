@@ -12,7 +12,10 @@ import {
   UsersIcon,
   MagnifyingGlassIcon,
   ArrowPathIcon,
-  FunnelIcon
+  FunnelIcon,
+  EyeIcon,
+  ChartBarIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
 
 const Departments = () => {
@@ -21,6 +24,7 @@ const Departments = () => {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [departmentForm, setDepartmentForm] = useState({
@@ -29,41 +33,12 @@ const Departments = () => {
     code: ''
   })
   const [selectedDepartmentId, setSelectedDepartmentId] = useState(null)
+  const [selectedDepartment, setSelectedDepartment] = useState(null)
+  const [departmentStats, setDepartmentStats] = useState(null)
   const [userCounts, setUserCounts] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
   const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    fetchDepartments()
-  }, [currentPage])
-  
-  useEffect(() => {
-    if (searchTerm) {
-      filterDepartments()
-    } else {
-      paginateDepartments(allDepartments)
-    }
-  }, [searchTerm])
-
-  const fetchDepartments = async () => {
-    setLoading(true)
-    try {
-      const response = await axios.get('/api/departments')
-      const departments = response.data
-      
-      setAllDepartments(departments)
-      paginateDepartments(departments)
-      
-      // Fetch user counts for departments
-      fetchUserCounts(departments)
-    } catch (error) {
-      console.error('Error fetching departments:', error)
-      toast.error('Failed to load departments')
-    } finally {
-      setLoading(false)
-    }
-  }
-  
   const paginateDepartments = (departmentsArray) => {
     // Simple pagination
     const itemsPerPage = 10
@@ -94,7 +69,40 @@ const Departments = () => {
     paginateDepartments(filtered)
     setCurrentPage(1) // Reset to first page on search
   }
+
+  const fetchDepartments = async () => {
+    setLoading(true)
+    try {
+      const response = await axios.get('/api/departments')
+      const departments = response.data
+      
+      setAllDepartments(departments)
+      // Don't call pagination here, let useEffect handle it
+      
+      // Fetch user counts for departments
+      fetchUserCounts(departments)
+    } catch (error) {
+      console.error('Error fetching departments:', error)
+      toast.error('Failed to load departments')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDepartments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run once on mount
   
+  useEffect(() => {
+    if (searchTerm) {
+      filterDepartments()
+    } else {
+      paginateDepartments(allDepartments)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, allDepartments, currentPage]) // Add currentPage dependency
+
   const fetchUserCounts = async (departments) => {
     const countPromises = departments.map(async (dept) => {
       try {
@@ -191,6 +199,57 @@ const Departments = () => {
     filterDepartments()
   }
 
+  const openDetailsModal = async (department) => {
+    setSelectedDepartment(department)
+    setIsDetailsModalOpen(true)
+    
+    try {
+      const response = await axios.get(`/api/departments/${department._id}/stats`)
+      setDepartmentStats(response.data)
+    } catch (error) {
+      console.error('Error fetching department stats:', error)
+      toast.error('Failed to load department statistics')
+    }
+  }
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false)
+    setSelectedDepartment(null)
+    setDepartmentStats(null)
+  }
+
+  const handleExport = async () => {
+    try {
+      const response = await axios.get('/api/departments/export')
+      const csvData = response.data
+      
+      // Convert to CSV format
+      const headers = Object.keys(csvData[0] || {})
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => 
+          headers.map(header => `"${row[header] || ''}"`).join(',')
+        )
+      ].join('\n')
+      
+      // Create download link
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `departments_${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      toast.success('Departments data exported successfully')
+    } catch (error) {
+      console.error('Error exporting departments:', error)
+      toast.error('Failed to export departments data')
+    }
+  }
+
   return (
     <div>
       <div className="sm:flex sm:items-center sm:justify-between">
@@ -201,6 +260,14 @@ const Departments = () => {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+          >
+            <ArrowDownTrayIcon className="-ml-1 mr-2 h-5 w-5 text-gray-500" aria-hidden="true" />
+            Export
+          </button>
           <button
             type="button"
             onClick={handleRefresh}
@@ -284,7 +351,14 @@ const Departments = () => {
                         <span className="font-medium">{userCounts[department._id] || 0}</span>
                         <span className="ml-1">users</span>
                       </div>
-                      <div className="ml-2 flex-shrink-0 flex">
+                      <div className="ml-2 flex-shrink-0 flex space-x-2">
+                        <button
+                          onClick={() => openDetailsModal(department)}
+                          className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                        >
+                          <EyeIcon className="h-4 w-4 mr-1" />
+                          View
+                        </button>
                         <button
                           onClick={() => openModal(department)}
                           className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
@@ -294,7 +368,7 @@ const Departments = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(department._id)}
-                          className="ml-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                         >
                           <TrashIcon className="h-4 w-4 mr-1" />
                           Delete
@@ -477,6 +551,127 @@ const Departments = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Department Details Modal */}
+      {isDetailsModalOpen && selectedDepartment && (
+        <div className="fixed z-20 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  type="button"
+                  onClick={closeDetailsModal}
+                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
+                  <span className="sr-only">Close</span>
+                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
+              
+              <div>
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100">
+                  <ChartBarIcon className="h-6 w-6 text-purple-600" aria-hidden="true" />
+                </div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Department Details: {selectedDepartment.name}
+                  </h3>
+                  {selectedDepartment.code && (
+                    <p className="text-sm text-gray-500">Code: {selectedDepartment.code}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                {/* Basic Information */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Basic Information</h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <span className="text-sm text-gray-500">Name:</span>
+                      <span className="ml-2 text-sm font-medium text-gray-900">{selectedDepartment.name}</span>
+                    </div>
+                    {selectedDepartment.code && (
+                      <div>
+                        <span className="text-sm text-gray-500">Code:</span>
+                        <span className="ml-2 text-sm font-medium text-gray-900">{selectedDepartment.code}</span>
+                      </div>
+                    )}
+                    {selectedDepartment.description && (
+                      <div>
+                        <span className="text-sm text-gray-500">Description:</span>
+                        <span className="ml-2 text-sm text-gray-900">{selectedDepartment.description}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-sm text-gray-500">Status:</span>
+                      <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        selectedDepartment.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedDepartment.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Created:</span>
+                      <span className="ml-2 text-sm text-gray-900">
+                        {new Date(selectedDepartment.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Statistics */}
+                {departmentStats ? (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Statistics</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-purple-600">{departmentStats.totalUsers}</div>
+                        <div className="text-xs text-gray-500">Total Users</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-green-600">{departmentStats.activeUsers}</div>
+                        <div className="text-xs text-gray-500">Active Users</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-blue-600">{departmentStats.attendanceStats.totalAttendance}</div>
+                        <div className="text-xs text-gray-500">Attendance (30 days)</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-orange-600">{departmentStats.attendanceStats.uniqueUserCount}</div>
+                        <div className="text-xs text-gray-500">Active Users (30 days)</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-center">
+                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-600"></div>
+                      <p className="mt-2 text-sm text-gray-500">Loading statistics...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={closeDetailsModal}
+                  className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:text-sm transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -255,6 +255,11 @@ const Users = () => {
                           }`}>
                             {user.role}
                           </span>
+                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {user.isActive !== false ? 'Active' : 'Inactive'}
+                          </span>
                         </div>
                         <div className="mt-1 flex">
                           <div className="flex items-center text-sm text-gray-500">

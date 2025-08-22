@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api.js';
 import toast from 'react-hot-toast';
 import { 
   CalendarIcon, 
@@ -27,7 +27,7 @@ const Events = () => {
   const fetchEvents = async () => {
     setRefreshing(true);
     try {
-      const response = await axios.get('/api/events');
+      const response = await api.get('/api/events');
       setEvents(response.data);
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -84,11 +84,11 @@ const Events = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-          <CalendarIcon className="h-7 w-7 mr-2 text-indigo-600" />
-          Events
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+            <CalendarIcon className="h-7 w-7 mr-2 text-indigo-600" />
+            Events
+          </h1>
         <div className="flex items-center space-x-3">
           <button
             onClick={fetchEvents}

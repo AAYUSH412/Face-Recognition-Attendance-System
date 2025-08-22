@@ -88,7 +88,7 @@ const Register = () => {
     
     try {
       // Remove confirmPassword before sending to API
-      const { confirmPassword, ...userData } = formData
+      const { confirmPassword: _, ...userData } = formData
       await register(userData)
       toast.success('Registration successful!')
       navigate('/')
@@ -164,8 +164,8 @@ const Register = () => {
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div>
             <img 
-              src="/logo.svg" 
-              alt="Logo" 
+              src="/icons8-attendance-48.png" 
+              alt="Attendance System" 
               className="h-12 w-auto" 
             />
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Create your account</h2>

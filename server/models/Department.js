@@ -7,6 +7,12 @@ const DepartmentSchema = new mongoose.Schema({
     trim: true,
     unique: true
   },
+  code: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    sparse: true // Allows multiple null values but unique non-null values
+  },
   description: {
     type: String,
     trim: true

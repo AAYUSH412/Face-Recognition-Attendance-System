@@ -87,8 +87,8 @@ const Login = () => {
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div>
             <img 
-              src="/logo.svg" 
-              alt="Logo" 
+              src="/icons8-attendance-48.png" 
+              alt="Attendance System" 
               className="h-12 w-auto" 
             />
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
@@ -98,27 +98,6 @@ const Login = () => {
                 create a new account
               </Link>
             </p>
-          </div>
-
-          {/* Demo Notice */}
-          <div className="mt-6 rounded-md bg-blue-50 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <ExclamationCircleIcon className="h-5 w-5 text-blue-400" aria-hidden="true" />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">Demo Version</h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p>This is a simplified demonstration version. Need demo accounts?</p>
-                  <Link 
-                    to="/demo" 
-                    className="font-medium text-blue-800 hover:text-blue-900 underline"
-                  >
-                    Setup Demo Data →
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
 
           {errors.general && (

@@ -22,6 +22,8 @@ const UserDetail = () => {
   const [saving, setSaving] = useState(false)
   const [recentAttendance, setRecentAttendance] = useState([])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showPasswordReset, setShowPasswordReset] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -60,7 +62,7 @@ const UserDetail = () => {
         const endDate = today.toISOString().split('T')[0]
         
         const attendanceResponse = await axios.get(`/api/attendance?userId=${id}&startDate=${startDate}&endDate=${endDate}`)
-        setRecentAttendance(attendanceResponse.data.slice(0, 10)) // Show only 10 most recent records
+        setRecentAttendance(attendanceResponse.data.records?.slice(0, 10) || []) // Show only 10 most recent records
       } catch (error) {
         console.error('Error fetching user details:', error)
         toast.error('User not found or error fetching details')
@@ -105,6 +107,34 @@ const UserDetail = () => {
     } catch (error) {
       console.error('Error deleting user:', error)
       toast.error('Failed to delete user')
+    }
+  }
+  
+  const handlePasswordReset = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters long')
+      return
+    }
+    
+    try {
+      await axios.put(`/api/users/${id}/password`, { newPassword })
+      toast.success('Password reset successfully')
+      setShowPasswordReset(false)
+      setNewPassword('')
+    } catch (error) {
+      console.error('Error resetting password:', error)
+      toast.error(error.response?.data?.message || 'Failed to reset password')
+    }
+  }
+  
+  const handleToggleStatus = async () => {
+    try {
+      const response = await axios.patch(`/api/users/${id}/status`)
+      toast.success(response.data.message)
+      setUser(response.data.user)
+    } catch (error) {
+      console.error('Error toggling user status:', error)
+      toast.error(error.response?.data?.message || 'Failed to update user status')
     }
   }
   
@@ -173,14 +203,44 @@ const UserDetail = () => {
             </Link>
             User Details
           </h1>
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            <XCircleIcon className="-ml-0.5 mr-2 h-4 w-4" />
-            Delete User
-          </button>
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={handleToggleStatus}
+              className={`inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${
+                user?.isActive
+                  ? 'text-white bg-orange-600 hover:bg-orange-700 focus:ring-orange-500'
+                  : 'text-white bg-green-600 hover:bg-green-700 focus:ring-green-500'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2`}
+            >
+              {user?.isActive ? (
+                <>
+                  <XCircleIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                  Deactivate User
+                </>
+              ) : (
+                <>
+                  <CheckCircleIcon className="-ml-0.5 mr-2 h-4 w-4" />
+                  Activate User
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPasswordReset(true)}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            >
+              Reset Password
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <XCircleIcon className="-ml-0.5 mr-2 h-4 w-4" />
+              Delete User
+            </button>
+          </div>
         </div>
       </div>
       
@@ -189,8 +249,19 @@ const UserDetail = () => {
           <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
             <UserIcon className="h-6 w-6 text-purple-600" />
           </div>
-          <div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900">{user.name}</h3>
+          <div className="flex-1">
+            <div className="flex items-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">{user.name}</h3>
+              <span
+                className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  user.isActive
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {user.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">
               {user.email} • <span className="capitalize">{user.role}</span>
               {user.department && ` • ${user.department.name}`}
@@ -449,6 +520,62 @@ const UserDetail = () => {
                   type="button"
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:w-auto sm:text-sm"
                   onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Password Reset Modal */}
+      {showPasswordReset && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                  <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600" aria-hidden="true" />
+                </div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Reset Password
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Enter a new password for {user.name}. The user will need to use this password to log in.
+                    </p>
+                  </div>
+                  <div className="mt-4">
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password (min 6 characters)"
+                      className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:col-start-2 sm:text-sm"
+                >
+                  Reset Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordReset(false)
+                    setNewPassword('')
+                  }}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                 >
                   Cancel
                 </button>
