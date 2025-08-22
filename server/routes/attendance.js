@@ -7,6 +7,159 @@ import { Parser } from 'json2csv';
 
 const router = express.Router();
 
+// @route   POST api/attendance/mark-manual
+// @desc    Mark attendance manually (demo mode)
+// @access  Private
+router.post('/mark-manual', auth, async (req, res) => {
+  try {
+    const { type, location, timestamp } = req.body;
+    
+    // Check attendance type (check-in or check-out)
+    const isCheckIn = type === 'check-in';
+    
+    // Get today's date (start of day)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Find if the user already has an attendance record for today
+    let attendance = await Attendance.findOne({
+      user: req.user.id,
+      date: {
+        $gte: today,
+        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+      }
+    });
+    
+    // If checking in and no attendance record exists, create new one
+    if (isCheckIn) {
+      if (attendance && attendance.checkIn.time) {
+        return res.status(400).json({ 
+          message: 'Already checked in today',
+          attendance 
+        });
+      }
+      
+      if (!attendance) {
+        // Get check-in cutoff time from settings (default: 9:00 AM)
+        const currentTime = new Date();
+        const cutoffTime = new Date(today);
+        cutoffTime.setHours(9, 0, 0, 0); // 9:00 AM cutoff
+        
+        const status = currentTime > cutoffTime ? 'late' : 'present';
+        
+        attendance = new Attendance({
+          user: req.user.id,
+          date: today,
+          status: status,
+          checkIn: {
+            time: currentTime,
+            method: 'manual',
+            confidence: 100, // Manual is 100% confident
+            location: location || 'Manual Entry'
+          },
+          method: 'manual'
+        });
+      } else {
+        attendance.checkIn = {
+          time: new Date(),
+          method: 'manual',
+          confidence: 100,
+          location: location || 'Manual Entry'
+        };
+        
+        // Update status based on check-in time
+        const cutoffTime = new Date(today);
+        cutoffTime.setHours(9, 0, 0, 0);
+        attendance.status = new Date() > cutoffTime ? 'late' : 'present';
+      }
+    } 
+    // If checking out, update the existing record
+    else {
+      if (!attendance || !attendance.checkIn.time) {
+        return res.status(400).json({ 
+          message: 'Must check in before checking out' 
+        });
+      }
+      
+      if (attendance.checkOut.time) {
+        return res.status(400).json({ 
+          message: 'Already checked out today',
+          attendance 
+        });
+      }
+      
+      attendance.checkOut = {
+        time: new Date(),
+        method: 'manual',
+        confidence: 100,
+        location: location || 'Manual Entry'
+      };
+      
+      // Calculate hours worked
+      const checkInTime = new Date(attendance.checkIn.time);
+      const checkOutTime = new Date(attendance.checkOut.time);
+      const hoursWorked = (checkOutTime - checkInTime) / (1000 * 60 * 60);
+      attendance.hoursWorked = Math.round(hoursWorked * 100) / 100;
+    }
+    
+    await attendance.save();
+    
+    // Populate user data for response
+    await attendance.populate('user', 'name email studentId employeeId');
+    
+    res.json({
+      message: `${isCheckIn ? 'Check-in' : 'Check-out'} successful`,
+      attendance,
+      checkInTime: attendance.checkIn.time,
+      checkOutTime: attendance.checkOut ? attendance.checkOut.time : null,
+      status: attendance.status,
+      hoursWorked: attendance.hoursWorked || 0
+    });
+    
+  } catch (error) {
+    console.error('Error marking manual attendance:', error);
+    res.status(500).json({ 
+      message: 'Failed to mark attendance',
+      error: error.message 
+    });
+  }
+});
+
+// @route   GET api/attendance/today
+// @desc    Get today's attendance record
+// @access  Private
+router.get('/today', auth, async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const attendance = await Attendance.findOne({
+      user: req.user.id,
+      date: {
+        $gte: today,
+        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+      }
+    }).populate('user', 'name email studentId employeeId');
+    
+    if (!attendance) {
+      return res.status(404).json({ message: 'No attendance record found for today' });
+    }
+    
+    res.json({
+      ...attendance.toObject(),
+      checkInTime: attendance.checkIn.time,
+      checkOutTime: attendance.checkOut ? attendance.checkOut.time : null,
+    });
+    
+  } catch (error) {
+    console.error('Error fetching today attendance:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch attendance',
+      error: error.message 
+    });
+  }
+});
+
 // @route   POST api/attendance/mark
 // @desc    Mark attendance with face recognition
 // @access  Private

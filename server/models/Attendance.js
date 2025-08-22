@@ -15,6 +15,12 @@ const AttendanceSchema = new mongoose.Schema({
     time: Date,
     imageUrl: String,
     confidence: Number,
+    method: {
+      type: String,
+      enum: ['face_recognition', 'manual', 'qr_code'],
+      default: 'face_recognition'
+    },
+    location: String,
     verified: {
       type: Boolean,
       default: false
@@ -24,6 +30,12 @@ const AttendanceSchema = new mongoose.Schema({
     time: Date,
     imageUrl: String,
     confidence: Number,
+    method: {
+      type: String,
+      enum: ['face_recognition', 'manual', 'qr_code'],
+      default: 'face_recognition'
+    },
+    location: String,
     verified: {
       type: Boolean,
       default: false
@@ -34,11 +46,15 @@ const AttendanceSchema = new mongoose.Schema({
     enum: ['present', 'absent', 'late', 'half-day', 'early-checkout', 'late-early-checkout'],
     default: 'present'
   },
-  location: {
-    type: {
-      lat: Number,
-      lng: Number
-    }
+  method: {
+    type: String,
+    enum: ['face_recognition', 'manual', 'qr_code'],
+    default: 'face_recognition'
+  },
+  location: String,
+  hoursWorked: {
+    type: Number,
+    default: 0
   },
   notes: String,
   verifiedBy: {

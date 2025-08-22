@@ -4,8 +4,8 @@ const DepartmentSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true,
-    trim: true
+    trim: true,
+    unique: true
   },
   description: {
     type: String,
@@ -20,5 +20,14 @@ const DepartmentSchema = new mongoose.Schema({
     default: true
   }
 }, { timestamps: true });
+
+// Handle duplicate key errors gracefully
+DepartmentSchema.post('save', function(error, doc, next) {
+  if (error.name === 'MongoError' && error.code === 11000) {
+    next(new Error('Department with this name already exists'));
+  } else {
+    next(error);
+  }
+});
 
 export default mongoose.model('Department', DepartmentSchema);

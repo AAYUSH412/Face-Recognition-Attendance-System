@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, Menu, Transition } from '@headlessui/react'
 import {
   HomeIcon,
-  CameraIcon,
+  ClipboardDocumentCheckIcon,
   ClockIcon,
   UserIcon,
   XMarkIcon,
@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext'
 // Update the navigation array to include Events
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon, description: 'Overview of your attendance' },
-  { name: 'Mark Attendance', href: '/mark-attendance', icon: CameraIcon, description: 'Check in or check out' },
+  { name: 'Mark Attendance', href: '/mark-attendance', icon: ClipboardDocumentCheckIcon, description: 'Check in or check out manually' },
   { name: 'Attendance History', href: '/history', icon: ClockIcon, description: 'View past attendance records' },
   { name: 'Events', href: '/events', icon: CalendarIcon, description: 'View and join events' },
   { name: 'Profile', href: '/profile', icon: UserIcon, description: 'Manage your account' },
@@ -362,7 +362,7 @@ const Layout = ({ children }) => {
                               'flex items-center px-4 py-2 text-sm text-gray-700'
                             )}
                           >
-                            <CameraIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <ClipboardDocumentCheckIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
                             Mark Attendance
                           </Link>
                         )}

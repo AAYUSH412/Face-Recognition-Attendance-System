@@ -11,13 +11,14 @@ import userRoutes from './routes/users.js';
 import attendanceRoutes from './routes/attendance.js';
 import departmentRoutes from './routes/departments.js';
 import eventRoutes from './routes/events.js';
+import demoRoutes from './routes/demo.js';
 
 // Load environment variables
 dotenv.config({ path: './.env.local' });
 
 // Create Express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -40,6 +41,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/demo', demoRoutes);
 
 // Root route
 app.get('/', (req, res) => {
