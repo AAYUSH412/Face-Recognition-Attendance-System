@@ -11,22 +11,70 @@ import {
   BellIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  CalendarIcon
+  CalendarIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
+import { 
+  Home,
+  ClipboardCheck,
+  Clock,
+  User,
+  Calendar,
+  Search,
+  Bell,
+  Settings,
+  LogOut,
+  Menu as MenuIcon,
+  X
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { Button, EnhancedAvatar, ThemeToggle, SkipLink, AccessibilityButton, PerformanceMonitor } from './ui'
+import { cn } from '../lib/utils'
 
-// Update the navigation array to include Events
+// Updated navigation with new design
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon, description: 'Overview of your attendance' },
-  { name: 'Mark Attendance', href: '/attendance', icon: ClipboardDocumentCheckIcon, description: 'Face, Manual, or QR attendance' },
-  { name: 'Attendance History', href: '/history', icon: ClockIcon, description: 'View past attendance records' },
-  { name: 'Events', href: '/events', icon: CalendarIcon, description: 'View and join events' },
-  { name: 'Profile', href: '/profile', icon: UserIcon, description: 'Manage your account' },
+  { 
+    name: 'Dashboard', 
+    href: '/', 
+    icon: HomeIcon, 
+    lucideIcon: Home,
+    description: 'Overview of your attendance',
+    color: 'text-primary-600'
+  },
+  { 
+    name: 'Mark Attendance', 
+    href: '/attendance', 
+    icon: ClipboardDocumentCheckIcon, 
+    lucideIcon: ClipboardCheck,
+    description: 'Face, Manual, or QR attendance',
+    color: 'text-secondary-600'
+  },
+  { 
+    name: 'Attendance History', 
+    href: '/history', 
+    icon: ClockIcon, 
+    lucideIcon: Clock,
+    description: 'View past attendance records',
+    color: 'text-accent-600'
+  },
+  { 
+    name: 'Events', 
+    href: '/events', 
+    icon: CalendarIcon, 
+    lucideIcon: Calendar,
+    description: 'View and join events',
+    color: 'text-purple-600'
+  },
+  { 
+    name: 'Profile', 
+    href: '/profile', 
+    icon: UserIcon, 
+    lucideIcon: User,
+    description: 'Manage your account',
+    color: 'text-emerald-600'
+  },
 ]
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
-}
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -83,14 +131,16 @@ const Layout = ({ children }) => {
       hour12: true
     })
   }
-  
+
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
+    <PerformanceMonitor>
+      <SkipLink href="#main-content">Skip to main content</SkipLink>
+      <div className="h-screen flex overflow-hidden bg-background-primary">
       {/* Mobile sidebar */}
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog
           as="div"
-          className="fixed inset-0 flex z-40 md:hidden"
+          className="fixed inset-0 flex z-40 lg:hidden"
           onClose={setSidebarOpen}
         >
           <Transition.Child
@@ -113,7 +163,7 @@ const Layout = ({ children }) => {
             leaveFrom="translate-x-0"
             leaveTo="-translate-x-full"
           >
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-gradient-to-b from-indigo-700 to-indigo-900 pt-5 pb-4">
+            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-background-surface border-r border-border-light shadow-strong">
               <Transition.Child
                 as={Fragment}
                 enter="ease-in-out duration-300"
@@ -124,156 +174,185 @@ const Layout = ({ children }) => {
                 leaveTo="opacity-0"
               >
                 <div className="absolute top-0 right-0 -mr-12 pt-2">
-                  <button
-                    type="button"
-                    className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/10"
                     onClick={() => setSidebarOpen(false)}
                   >
                     <span className="sr-only">Close sidebar</span>
-                    <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                  </button>
+                    <X className="h-6 w-6" />
+                  </Button>
                 </div>
               </Transition.Child>
-              <div className="flex-shrink-0 flex items-center px-4">
-                <div className="flex items-center justify-center">
-                  <img 
-                    src="/Face Recognition Attendance System-logo.png" 
-                    alt="Face Recognition Attendance System" 
-                    className="h-8 w-8 object-contain"
-                  />
-                  <h1 className="text-xl font-bold text-white ml-2">FR Attendance</h1>
-                </div>
-              </div>
-              <div className="mt-5 flex-1 h-0 overflow-y-auto">
-                <div className="px-2 space-y-1">
-                  {currentUser && (
-                    <div className="mb-6 px-3 py-3 rounded-lg bg-indigo-800 bg-opacity-50">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-white text-indigo-700 flex items-center justify-center font-bold text-lg">
-                          {currentUser?.name?.charAt(0) || 'U'}
-                        </div>
-                        <div className="ml-3">
-                          <p className="text-sm font-medium text-white">{currentUser?.name || 'User'}</p>
-                          <p className="text-xs text-indigo-200 truncate">{currentUser?.email || 'user@example.com'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={classNames(
-                        item.href === location.pathname
-                          ? 'bg-indigo-800 text-white'
-                          : 'text-indigo-100 hover:bg-indigo-800 hover:text-white',
-                        'group flex items-center px-3 py-3 text-base font-medium rounded-md'
-                      )}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <item.icon
-                        className={classNames(
-                          item.href === location.pathname
-                            ? 'text-white'
-                            : 'text-indigo-300 group-hover:text-white',
-                          'mr-4 flex-shrink-0 h-6 w-6'
-                        )}
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <div>{item.name}</div>
-                        <p className="text-xs text-indigo-300 group-hover:text-indigo-200">{item.description}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-                <div className="mt-10 pt-6 border-t border-indigo-800">
-                  <div className="px-2">
-                    <button
-                      onClick={handleLogout}
-                      className="group flex items-center px-3 py-3 text-base font-medium rounded-md text-indigo-100 hover:bg-indigo-800 hover:text-white w-full"
-                    >
-                      <ArrowRightOnRectangleIcon className="mr-4 flex-shrink-0 h-6 w-6 text-indigo-300 group-hover:text-white" />
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Transition.Child>
-          <div className="flex-shrink-0 w-14" aria-hidden="true">
-            {/* Force sidebar to shrink to fit close icon */}
-          </div>
-        </Dialog>
-      </Transition.Root>
-
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64">
-          <div className="flex flex-col h-0 flex-1 bg-gradient-to-b from-indigo-700 to-indigo-900">
-            <div className="flex-1 flex flex-col overflow-y-auto pt-5 pb-4">
-              <div className="flex items-center justify-center flex-shrink-0 px-4 mb-5">
+              
+              {/* Mobile Sidebar Content */}
+              <div className="flex-shrink-0 flex items-center px-6 py-4 border-b border-border-light">
                 <img 
                   src="/Face Recognition Attendance System-logo.png" 
                   alt="Face Recognition Attendance System" 
                   className="h-8 w-8 object-contain"
                 />
-                <h1 className="text-lg font-bold text-white ml-2">Attendance System</h1>
+                <h1 className="text-lg font-heading font-semibold text-text-primary ml-3">Attendance</h1>
               </div>
               
-              {currentUser && (
-                <div className="mx-3 mb-6 px-3 py-3 rounded-lg bg-indigo-800 bg-opacity-50">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-white text-indigo-700 flex items-center justify-center font-bold text-lg">
-                      {currentUser?.name?.charAt(0) || 'U'}
+              <div className="mt-4 flex-1 h-0 overflow-y-auto">
+                {/* User Profile Section */}
+                {currentUser && (
+                  <div className="px-6 py-4 border-b border-border-light">
+                    <div className="flex items-center space-x-3">
+                      <EnhancedAvatar 
+                        name={currentUser?.name}
+                        size="lg"
+                        className="ring-2 ring-primary-200"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {currentUser?.name || 'User'}
+                        </p>
+                        <p className="text-xs text-text-secondary truncate">
+                          {currentUser?.email || 'user@example.com'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-white">{currentUser?.name || 'User'}</p>
-                      <p className="text-xs text-indigo-200 truncate">{currentUser?.email || 'user@example.com'}</p>
+                  </div>
+                )}
+                
+                {/* Navigation */}
+                <nav className="px-3 py-4 space-y-1">
+                  {navigation.map((item) => {
+                    const Icon = item.lucideIcon
+                    const isActive = item.href === location.pathname
+                    
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={cn(
+                          "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                          isActive
+                            ? "bg-primary-50 text-primary-700 border border-primary-200 shadow-sm"
+                            : "text-text-secondary hover:bg-background-secondary hover:text-text-primary"
+                        )}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <Icon
+                          className={cn(
+                            "mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200",
+                            isActive ? "text-primary-600" : "text-text-muted group-hover:text-text-secondary"
+                          )}
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{item.name}</div>
+                          <p className="text-xs mt-1 text-text-muted group-hover:text-text-secondary">
+                            {item.description}
+                          </p>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </nav>
+                
+                {/* Logout Button */}
+                <div className="px-3 py-4 border-t border-border-light mt-auto">
+                  <Button
+                    variant="ghost"
+                    onClick={handleLogout}
+                    className="w-full justify-start text-text-secondary hover:text-error-600 hover:bg-error-50"
+                  >
+                    <LogOut className="mr-3 h-5 w-5" />
+                    Sign out
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Transition.Child>
+          <div className="flex-shrink-0 w-14" aria-hidden="true" />
+        </Dialog>
+      </Transition.Root>
+
+      {/* Desktop sidebar */}
+      <div className="hidden lg:flex lg:flex-shrink-0">
+        <div className="flex flex-col w-72">
+          <div className="flex flex-col h-full bg-background-surface border-r border-border-light">
+            {/* Logo Section */}
+            <div className="flex-shrink-0 flex items-center px-6 py-4 border-b border-border-light">
+              <img 
+                src="/Face Recognition Attendance System-logo.png" 
+                alt="Face Recognition Attendance System" 
+                className="h-8 w-8 object-contain"
+              />
+              <h1 className="text-lg font-heading font-semibold text-text-primary ml-3">
+                Attendance System
+              </h1>
+            </div>
+            
+            <div className="flex-1 flex flex-col overflow-y-auto pt-4">
+              {/* User Profile Section */}
+              {currentUser && (
+                <div className="px-6 py-4 border-b border-border-light">
+                  <div className="flex items-center space-x-3">
+                    <EnhancedAvatar 
+                      name={currentUser?.name}
+                      size="lg"
+                      className="ring-2 ring-primary-200"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text-primary truncate">
+                        {currentUser?.name || 'User'}
+                      </p>
+                      <p className="text-xs text-text-secondary truncate">
+                        {currentUser?.email || 'user@example.com'}
+                      </p>
                     </div>
                   </div>
                 </div>
               )}
               
-              <nav className="flex-1 px-2 space-y-1">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={classNames(
-                      item.href === location.pathname
-                        ? 'bg-indigo-800 text-white'
-                        : 'text-indigo-100 hover:bg-indigo-800 hover:text-white',
-                      'group flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors duration-150'
-                    )}
-                  >
-                    <item.icon
-                      className={classNames(
-                        item.href === location.pathname
-                          ? 'text-white'
-                          : 'text-indigo-300 group-hover:text-white',
-                        'mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-150'
+              {/* Navigation */}
+              <nav className="flex-1 px-4 py-4 space-y-2">
+                {navigation.map((item) => {
+                  const Icon = item.lucideIcon
+                  const isActive = item.href === location.pathname
+                  
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={cn(
+                        "group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                        isActive
+                          ? "bg-primary-50 text-primary-700 border border-primary-200 shadow-sm"
+                          : "text-text-secondary hover:bg-background-secondary hover:text-text-primary"
                       )}
-                      aria-hidden="true"
-                    />
-                    <div>
-                      <div>{item.name}</div>
-                      <p className="text-xs text-indigo-300 group-hover:text-indigo-200">{item.description}</p>
-                    </div>
-                  </Link>
-                ))}
+                    >
+                      <Icon
+                        className={cn(
+                          "mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200",
+                          isActive ? "text-primary-600" : "text-text-muted group-hover:text-text-secondary"
+                        )}
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{item.name}</div>
+                        <p className="text-xs mt-1 text-text-muted group-hover:text-text-secondary">
+                          {item.description}
+                        </p>
+                      </div>
+                    </Link>
+                  )
+                })}
               </nav>
               
-              <div className="mt-auto pt-4 border-t border-indigo-800 mx-3">
-                <div className="px-2">
-                  <button
-                    onClick={handleLogout}
-                    className="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-indigo-100 hover:bg-indigo-800 hover:text-white w-full transition-colors duration-150"
-                  >
-                    <ArrowRightOnRectangleIcon className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-300 group-hover:text-white" />
-                    Sign out
-                  </button>
-                </div>
+              {/* Logout Button */}
+              <div className="px-4 py-4 border-t border-border-light">
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="w-full justify-start text-text-secondary hover:text-error-600 hover:bg-error-50"
+                >
+                  <LogOut className="mr-3 h-5 w-5" />
+                  Sign out
+                </Button>
               </div>
             </div>
           </div>
@@ -282,54 +361,55 @@ const Layout = ({ children }) => {
 
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
-          <button
-            type="button"
-            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
+        {/* Top Navigation Bar */}
+        <div className="relative z-10 flex-shrink-0 flex h-16 bg-background-surface border-b border-border-light shadow-soft">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="px-4 border-r border-border-light text-text-secondary lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <span className="sr-only">Open sidebar</span>
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-          </button>
+            <MenuIcon className="h-6 w-6" />
+          </Button>
           
           <div className="flex-1 px-4 flex items-center justify-between">
-            <div className="flex-1 flex">
-              <div className="ml-2 hidden sm:flex flex-col justify-center">
-                <div className="text-xs text-gray-500">{formatDate(currentTime)}</div>
-                <div className="text-sm font-medium">{formatTime(currentTime)}</div>
+            <div className="flex-1 flex items-center space-x-4">
+              {/* Date and Time */}
+              <div className="hidden sm:flex flex-col justify-center">
+                <div className="text-xs text-text-muted">{formatDate(currentTime)}</div>
+                <div className="text-sm font-medium text-text-secondary">{formatTime(currentTime)}</div>
               </div>
-              <div className="hidden md:block ml-6">
-                <h2 className="text-xl font-semibold text-gray-800">
+              
+              {/* Greeting */}
+              <div className="hidden md:block">
+                <h2 className="text-xl font-heading font-semibold text-text-primary">
                   {greeting}, {currentUser?.name?.split(' ')[0] || 'there'}!
                 </h2>
               </div>
             </div>
             
-            <div className="flex items-center">
-              <button
-                type="button"
-                className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-3"
-              >
+            {/* Right side actions */}
+            <div className="flex items-center space-x-2">              
+              {/* Notifications */}
+              <Button variant="ghost" size="icon" className="text-text-muted hover:text-text-primary relative">
                 <span className="sr-only">View notifications</span>
-                <BellIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-              
-              <Link
-                to="/profile"
-                className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-3"
-              >
-                <span className="sr-only">Settings</span>
-                <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />
-              </Link>
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-error-500 rounded-full"></span>
+              </Button>
               
               {/* Profile dropdown */}
               <Menu as="div" className="relative">
                 <div>
-                  <Menu.Button className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  <Menu.Button className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                     <span className="sr-only">Open user menu</span>
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-center">
-                      {currentUser?.name?.charAt(0) || 'U'}
-                    </div>
+                    <EnhancedAvatar 
+                      name={currentUser?.name}
+                      size="default"
+                      className="ring-2 ring-primary-200 hover:ring-primary-300 transition-all duration-200"
+                    />
+                    <ChevronDownIcon className="ml-1 h-4 w-4 text-text-muted" />
                   </Menu.Button>
                 </div>
                 <Transition
@@ -341,22 +421,22 @@ const Layout = ({ children }) => {
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100">
+                  <Menu.Items className="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-strong bg-background-surface ring-1 ring-border-light focus:outline-none divide-y divide-border-light">
                     <div className="py-3 px-4">
-                      <p className="text-sm font-medium text-gray-900">Signed in as</p>
-                      <p className="text-sm text-gray-500 truncate">{currentUser?.email}</p>
+                      <p className="text-sm font-medium text-text-primary">Signed in as</p>
+                      <p className="text-sm text-text-secondary truncate">{currentUser?.email}</p>
                     </div>
                     <div className="py-1">
                       <Menu.Item>
                         {({ active }) => (
                           <Link
                             to="/profile"
-                            className={classNames(
-                              active ? 'bg-gray-100' : '',
-                              'flex items-center px-4 py-2 text-sm text-gray-700'
+                            className={cn(
+                              "flex items-center px-4 py-2 text-sm transition-colors duration-150",
+                              active ? 'bg-background-secondary text-text-primary' : 'text-text-secondary'
                             )}
                           >
-                            <UserIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <User className="mr-3 h-4 w-4" />
                             Your Profile
                           </Link>
                         )}
@@ -364,13 +444,13 @@ const Layout = ({ children }) => {
                       <Menu.Item>
                         {({ active }) => (
                           <Link
-                            to="/mark-attendance"
-                            className={classNames(
-                              active ? 'bg-gray-100' : '',
-                              'flex items-center px-4 py-2 text-sm text-gray-700'
+                            to="/attendance"
+                            className={cn(
+                              "flex items-center px-4 py-2 text-sm transition-colors duration-150",
+                              active ? 'bg-background-secondary text-text-primary' : 'text-text-secondary'
                             )}
                           >
-                            <ClipboardDocumentCheckIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <ClipboardCheck className="mr-3 h-4 w-4" />
                             Mark Attendance
                           </Link>
                         )}
@@ -381,12 +461,12 @@ const Layout = ({ children }) => {
                         {({ active }) => (
                           <button
                             onClick={handleLogout}
-                            className={classNames(
-                              active ? 'bg-gray-100' : '',
-                              'flex items-center w-full text-left px-4 py-2 text-sm text-gray-700'
+                            className={cn(
+                              "flex items-center w-full text-left px-4 py-2 text-sm transition-colors duration-150",
+                              active ? 'bg-error-50 text-error-700' : 'text-text-secondary'
                             )}
                           >
-                            <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <LogOut className="mr-3 h-4 w-4" />
                             Sign out
                           </button>
                         )}
@@ -399,24 +479,28 @@ const Layout = ({ children }) => {
           </div>
         </div>
 
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
+        {/* Main content area */}
+        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-background-primary">
           <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {/* Page header with mobile greeting */}
-              <div className="md:hidden mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">
+            <div className="container-responsive">
+              {/* Mobile greeting */}
+              <div className="lg:hidden mb-6">
+                <h2 className="text-xl font-heading font-semibold text-text-primary">
                   {greeting}, {currentUser?.name?.split(' ')[0] || 'there'}!
                 </h2>
-                <p className="text-sm text-gray-500">{formatDate(currentTime)}</p>
+                <p className="text-sm text-text-secondary">{formatDate(currentTime)}</p>
               </div>
               
-              {/* Main content */}
-              {children}
+              {/* Page content */}
+              <main id="main-content" className="animate-in" role="main" aria-label="Main content">
+                {children}
+              </main>
             </div>
           </div>
         </main>
       </div>
     </div>
+    </PerformanceMonitor>
   )
 }
 
