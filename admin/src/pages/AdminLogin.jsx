@@ -38,9 +38,11 @@ const AdminLogin = () => {
       <div className="flex flex-1 flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white">
         <div className="mx-auto w-full max-w-sm">
           <div className="flex justify-center">
-            <div className="h-16 w-16 bg-purple-600 rounded-full flex items-center justify-center">
-              <BuildingOfficeIcon className="h-8 w-8 text-white" />
-            </div>
+            <img 
+              src="/Face Recognition Attendance System-logo.png" 
+              alt="Face Recognition Attendance System" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
           
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

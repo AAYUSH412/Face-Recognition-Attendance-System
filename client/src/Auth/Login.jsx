@@ -87,9 +87,9 @@ const Login = () => {
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div>
             <img 
-              src="/icons8-attendance-48.png" 
-              alt="Attendance System" 
-              className="h-12 w-auto" 
+              src="/Face Recognition Attendance System-logo.png" 
+              alt="Face Recognition Attendance System" 
+              className="h-16 w-auto object-contain" 
             />
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
             <p className="mt-2 text-sm text-gray-600">

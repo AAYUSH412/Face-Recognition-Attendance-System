@@ -110,9 +110,11 @@ const AdminLayout = ({ children }) => {
               </Transition.Child>
               <div className="flex-shrink-0 flex items-center px-4">
                 <div className="flex items-center">
-                  <div className="bg-purple-600 p-2 rounded-md">
-                    <BuildingOfficeIcon className="h-6 w-6 text-white" />
-                  </div>
+                  <img 
+                    src="/Face Recognition Attendance System-logo.png" 
+                    alt="Face Recognition Attendance System" 
+                    className="h-8 w-8 object-contain"
+                  />
                   <h1 className="text-xl font-bold text-purple-600 ml-2">Admin Panel</h1>
                 </div>
               </div>
@@ -189,9 +191,11 @@ const AdminLayout = ({ children }) => {
           <div className="flex flex-col h-0 flex-1">
             <div className="flex items-center h-16 flex-shrink-0 px-4 bg-white border-b border-gray-200">
               <div className="flex items-center">
-                <div className="bg-purple-600 p-2 rounded-md">
-                  <BuildingOfficeIcon className="h-5 w-5 text-white" />
-                </div>
+                <img 
+                  src="/Face Recognition Attendance System-logo.png" 
+                  alt="Face Recognition Attendance System" 
+                  className="h-8 w-8 object-contain"
+                />
                 <h1 className="text-xl font-bold text-purple-600 ml-2">Admin Panel</h1>
               </div>
             </div>

@@ -136,7 +136,11 @@ const Layout = ({ children }) => {
               </Transition.Child>
               <div className="flex-shrink-0 flex items-center px-4">
                 <div className="flex items-center justify-center">
-                  <CalendarIcon className="h-8 w-8 text-white" />
+                  <img 
+                    src="/Face Recognition Attendance System-logo.png" 
+                    alt="Face Recognition Attendance System" 
+                    className="h-8 w-8 object-contain"
+                  />
                   <h1 className="text-xl font-bold text-white ml-2">FR Attendance</h1>
                 </div>
               </div>
@@ -209,7 +213,11 @@ const Layout = ({ children }) => {
           <div className="flex flex-col h-0 flex-1 bg-gradient-to-b from-indigo-700 to-indigo-900">
             <div className="flex-1 flex flex-col overflow-y-auto pt-5 pb-4">
               <div className="flex items-center justify-center flex-shrink-0 px-4 mb-5">
-                <CalendarIcon className="h-8 w-8 text-white" />
+                <img 
+                  src="/Face Recognition Attendance System-logo.png" 
+                  alt="Face Recognition Attendance System" 
+                  className="h-8 w-8 object-contain"
+                />
                 <h1 className="text-lg font-bold text-white ml-2">Attendance System</h1>
               </div>
               
