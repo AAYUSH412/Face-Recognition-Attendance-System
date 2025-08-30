@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import { format, isToday, subDays } from 'date-fns';
 import { 
   CameraIcon, 
@@ -43,9 +44,9 @@ import {
 } from './ui/index.js';
 
 const ModernDashboard = () => {
+  const { currentUser } = useAuth();
   const [todayAttendance, setTodayAttendance] = useState(null);
   const [recentAttendance, setRecentAttendance] = useState([]);
-  const [userProfile] = useState({ name: 'John Doe', email: 'john@example.com', department: 'Engineering' });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   // const [showModal, setShowModal] = useState(false);
@@ -150,7 +151,7 @@ const ModernDashboard = () => {
             <div className="flex items-center justify-between">
               <div className="text-white">
                 <h1 className="text-4xl font-bold mb-2">
-                  {getGreeting()}, {userProfile.name}! 👋
+                  {getGreeting()}, {currentUser?.name || 'User'}! 👋
                 </h1>
                 <p className="text-blue-100 text-lg">
                   Welcome to your attendance dashboard
@@ -158,7 +159,7 @@ const ModernDashboard = () => {
                 <div className="flex items-center gap-4 mt-4">
                   <div className="flex items-center gap-2">
                     <MapPinIcon className="h-4 w-4 text-blue-200" />
-                    <span className="text-blue-100 text-sm">{userProfile.department}</span>
+                    <span className="text-blue-100 text-sm">{currentUser?.department?.name || 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CalendarDaysIcon className="h-4 w-4 text-blue-200" />
@@ -183,8 +184,8 @@ const ModernDashboard = () => {
                   <Link to="/profile">
                     <EnhancedAvatar 
                       src={null}
-                      alt={userProfile.name}
-                      fallback={userProfile.name.charAt(0)}
+                      alt={currentUser?.name || 'User'}
+                      fallback={currentUser?.name?.charAt(0) || 'U'}
                       size="lg"
                       className="ring-2 ring-white/30"
                     />
