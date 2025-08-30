@@ -51,51 +51,56 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
-      // Fetch users count
-      const usersResponse = await usersAPI.getAll()
-      const users = usersResponse.data
+      // Parallel API calls for better performance
+      const [userStatsResponse, attendanceStatsResponse, departmentsResponse, recentAttendanceResponse] = await Promise.all([
+        usersAPI.getStats(),
+        attendanceAPI.getStats({ date: new Date().toISOString().split('T')[0] }),
+        departmentsAPI.getAll(),
+        attendanceAPI.getAll({ 
+          startDate: new Date().toISOString().split('T')[0], 
+          endDate: new Date().toISOString().split('T')[0],
+          limit: 5 
+        })
+      ]);
+
+      const userStats = userStatsResponse.data;
+      const attendanceStats = attendanceStatsResponse.data;
+      const departments = departmentsResponse.data;
+      const recentAttendance = recentAttendanceResponse.data.records || [];
       
-      // Today's date in ISO format
-      const today = new Date().toISOString().split('T')[0]
-      
-      // Fetch today's attendance
-      const attendanceResponse = await attendanceAPI.getAll({ 
-        startDate: today, 
-        endDate: today 
-      })
-      const todayAttendance = attendanceResponse.data.records || []
-      
-      // Fetch departments
-      const departmentsResponse = await departmentsAPI.getAll()
-      const departments = departmentsResponse.data
-      
-      // Calculate attendance percentages for today
-      const totalAttendanceCount = todayAttendance.length || 1  // Avoid division by zero
-      const presentCount = todayAttendance.filter(record => record.status === 'present').length
-      const lateCount = todayAttendance.filter(record => record.status === 'late').length
-      const absentCount = todayAttendance.filter(record => record.status === 'absent').length
+      // Get attendance data for today
+      const totalAttendanceCount = attendanceStats.total || 0;
       
       // Calculate stats
       setStats({
-        totalUsers: users.length,
-        totalStudents: users.filter(user => user.role === 'student').length,
-        totalFaculty: users.filter(user => user.role === 'faculty').length,
-        todayAttendance: todayAttendance.length,
-        pendingVerifications: todayAttendance.filter(record => 
-          (!record.checkIn?.verified && record.checkIn?.time) || 
-          (!record.checkOut?.verified && record.checkOut?.time)
-        ).length,
-        departments: departments.length,
-        presentPercentage: Math.round((presentCount / totalAttendanceCount) * 100),
-        absentPercentage: Math.round((absentCount / totalAttendanceCount) * 100),
-        latePercentage: Math.round((lateCount / totalAttendanceCount) * 100)
+        totalUsers: userStats.total || 0,
+        totalStudents: userStats.byRole?.student || 0,
+        totalFaculty: userStats.byRole?.faculty || 0,
+        todayAttendance: totalAttendanceCount,
+        pendingVerifications: attendanceStats.pendingVerification || 0,
+        departments: departments.length || 0,
+        presentPercentage: Math.round(parseFloat(attendanceStats.presentPercentage || 0)),
+        absentPercentage: Math.round(parseFloat(attendanceStats.absentPercentage || 0)),
+        latePercentage: Math.round(parseFloat(attendanceStats.latePercentage || 0))
       })
       
       // Set recent activity (latest attendance records)
-      setRecentActivity(todayAttendance.slice(0, 5))
+      setRecentActivity(recentAttendance.slice(0, 5))
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
+      // Set default stats in case of error
+      setStats({
+        totalUsers: 0,
+        totalStudents: 0,
+        totalFaculty: 0,
+        todayAttendance: 0,
+        pendingVerifications: 0,
+        departments: 0,
+        presentPercentage: 0,
+        absentPercentage: 0,
+        latePercentage: 0
+      })
     } finally {
       setLoading(false)
     }

@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { Eye, EyeOff, AlertCircle, CheckCircle, User, Mail, Lock, IdCard } from 'lucide-react'
+import { Button, SkipLink, LiveRegion } from '../components/ui'
+import Input from '../components/ui/Input'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card'
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -140,15 +143,15 @@ const Register = () => {
     return strength
   }
   
-  const strengthClass = (strength) => {
-    if (strength <= 1) return 'bg-red-500'
-    if (strength === 2) return 'bg-orange-500'
-    if (strength === 3) return 'bg-yellow-500'
-    if (strength === 4) return 'bg-green-500'
-    return 'bg-green-600'
+  const getStrengthColor = (strength) => {
+    if (strength <= 1) return 'bg-error-500'
+    if (strength === 2) return 'bg-warning-500'
+    if (strength === 3) return 'bg-warning-400'
+    if (strength === 4) return 'bg-success-500'
+    return 'bg-success-600'
   }
   
-  const strengthText = (strength) => {
+  const getStrengthText = (strength) => {
     if (strength <= 1) return 'Very Weak'
     if (strength === 2) return 'Weak'
     if (strength === 3) return 'Medium'
@@ -159,300 +162,326 @@ const Register = () => {
   const passwordStrength = getPasswordStrength(formData.password)
   
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="flex flex-1 flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          <div>
-            <img 
-              src="/Face Recognition Attendance System-logo.png" 
-              alt="Face Recognition Attendance System" 
-              className="h-16 w-auto object-contain" 
-            />
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Create your account</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Sign in
-              </Link>
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-background-primary to-secondary-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <SkipLink href="#register-form">Skip to registration form</SkipLink>
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <img 
+            src="/Face Recognition Attendance System-logo.png" 
+            alt="Face Recognition Attendance System" 
+            className="mx-auto h-16 w-auto object-contain" 
+          />
+          <h1 className="mt-6 text-3xl font-heading font-bold text-text-primary">
+            Create your account
+          </h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            Join our attendance tracking platform
+          </p>
+        </div>
 
-          {errors.general && (
-            <div className="mt-4 rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <ExclamationCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{errors.general}</h3>
+        <Card id="register-form" className="mt-8 shadow-medium" role="main" aria-labelledby="register-title">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle id="register-title" className="text-center text-xl">Sign up</CardTitle>
+            <CardDescription className="text-center">
+              Enter your information to create your account
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            {errors.general && (
+              <div className="rounded-lg bg-error-50 border border-error-200 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-error-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-error-800">{errors.general}</h3>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="mt-8">
-            <div className="mt-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <form onSubmit={handleSubmit} className="space-y-6" role="form" aria-labelledby="register-title">
+              <LiveRegion>
+                {errors.general && `Error: ${errors.general}`}
+                {Object.keys(errors).length > 0 && !errors.general && 'Please correct the errors in the form'}
+              </LiveRegion>
+              
+              <div className="space-y-4">
+                {/* Name Field */}
+                <div className="form-group">
+                  <label htmlFor="name" className="form-label">
                     Full Name
+                    <span className="text-red-500 ml-1" aria-label="required">*</span>
                   </label>
-                  <div className="relative mt-1">
-                    <input
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-4 w-4 text-text-muted" aria-hidden="true" />
+                    </div>
+                    <Input
                       id="name"
                       name="name"
                       type="text"
                       autoComplete="name"
+                      placeholder="Enter your full name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`block w-full appearance-none rounded-md border ${
-                        errors.name ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-                      } px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none sm:text-sm`}
-                      aria-invalid={errors.name ? 'true' : 'false'}
-                      aria-describedby={errors.name ? 'name-error' : undefined}
+                      error={!!errors.name}
+                      aria-describedby={errors.name ? "name-error" : undefined}
+                      aria-invalid={!!errors.name}
+                      required
+                      disabled={loading}
+                      className="pl-10"
                     />
-                    {errors.name && (
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
-                      </div>
-                    )}
                   </div>
                   {errors.name && (
-                    <p className="mt-2 text-sm text-red-600" id="name-error">
+                    <p id="name-error" className="form-error" role="alert" aria-live="polite">
                       {errors.name}
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                {/* Email Field */}
+                <div className="form-group">
+                  <label htmlFor="email" className="form-label">
                     Email address
+                    <span className="text-red-500 ml-1" aria-label="required">*</span>
                   </label>
-                  <div className="relative mt-1">
-                    <input
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-4 w-4 text-text-muted" aria-hidden="true" />
+                    </div>
+                    <Input
                       id="email"
                       name="email"
                       type="email"
                       autoComplete="email"
+                      placeholder="Enter your email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`block w-full appearance-none rounded-md border ${
-                        errors.email ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-                      } px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none sm:text-sm`}
-                      aria-invalid={errors.email ? 'true' : 'false'}
-                      aria-describedby={errors.email ? 'email-error' : undefined}
+                      error={!!errors.email}
+                      aria-describedby={errors.email ? "email-error" : undefined}
+                      aria-invalid={!!errors.email}
+                      required
+                      disabled={loading}
+                      className="pl-10"
                     />
-                    {errors.email && (
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
-                      </div>
-                    )}
                   </div>
                   {errors.email && (
-                    <p className="mt-2 text-sm text-red-600" id="email-error">
+                    <p id="email-error" className="form-error" role="alert" aria-live="polite">
                       {errors.email}
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <div className="relative mt-1">
-                    <input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`block w-full appearance-none rounded-md border ${
-                        errors.password ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-                      } px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none sm:text-sm pr-10`}
-                      aria-invalid={errors.password ? 'true' : 'false'}
-                      aria-describedby={errors.password ? 'password-error' : undefined}
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
-                      onClick={togglePasswordVisibility}
-                    >
-                      {showPassword ? (
-                        <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
-                      )}
-                    </button>
-                    {errors.password && (
-                      <div className="pointer-events-none absolute inset-y-0 right-8 flex items-center">
-                        <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
-                      </div>
-                    )}
-                  </div>
-                  {errors.password ? (
-                    <p className="mt-2 text-sm text-red-600" id="password-error">
-                      {errors.password}
-                    </p>
-                  ) : formData.password && (
-                    <div className="mt-2">
-                      <div className="flex justify-between items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-                          <div className={`h-2 rounded-full ${strengthClass(passwordStrength)}`} style={{ width: `${(passwordStrength / 5) * 100}%` }}></div>
-                        </div>
-                        <span className="text-xs text-gray-600">{strengthText(passwordStrength)}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                    Confirm Password
-                  </label>
-                  <div className="relative mt-1">
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className={`block w-full appearance-none rounded-md border ${
-                        errors.confirmPassword ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-                      } px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none sm:text-sm pr-10`}
-                      aria-invalid={errors.confirmPassword ? 'true' : 'false'}
-                      aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
-                      onClick={toggleConfirmPasswordVisibility}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
-                      )}
-                    </button>
-                    {errors.confirmPassword ? (
-                      <div className="pointer-events-none absolute inset-y-0 right-8 flex items-center">
-                        <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
-                      </div>
-                    ) : (formData.confirmPassword && formData.password === formData.confirmPassword) && (
-                      <div className="pointer-events-none absolute inset-y-0 right-8 flex items-center">
-                        <CheckCircleIcon className="h-5 w-5 text-green-500" aria-hidden="true" />
-                      </div>
-                    )}
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="mt-2 text-sm text-red-600" id="confirmPassword-error">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="registrationId" className="block text-sm font-medium text-gray-700">
+                {/* Registration ID Field */}
+                <div className="form-group">
+                  <label htmlFor="registrationId" className="form-label">
                     Registration/Student ID
+                    <span className="text-red-500 ml-1" aria-label="required">*</span>
                   </label>
-                  <div className="relative mt-1">
-                    <input
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <IdCard className="h-4 w-4 text-text-muted" aria-hidden="true" />
+                    </div>
+                    <Input
                       id="registrationId"
                       name="registrationId"
                       type="text"
+                      placeholder="Enter your registration ID"
                       value={formData.registrationId}
                       onChange={handleChange}
-                      className={`block w-full appearance-none rounded-md border ${
-                        errors.registrationId ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-                      } px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none sm:text-sm`}
-                      aria-invalid={errors.registrationId ? 'true' : 'false'}
-                      aria-describedby={errors.registrationId ? 'registrationId-error' : undefined}
+                      error={!!errors.registrationId}
+                      aria-describedby={errors.registrationId ? "registrationId-error" : undefined}
+                      aria-invalid={!!errors.registrationId}
+                      required
+                      disabled={loading}
+                      className="pl-10"
                     />
-                    {errors.registrationId && (
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
-                      </div>
-                    )}
                   </div>
                   {errors.registrationId && (
-                    <p className="mt-2 text-sm text-red-600" id="registrationId-error">
+                    <p id="registrationId-error" className="form-error" role="alert" aria-live="polite">
                       {errors.registrationId}
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                {/* Role Field */}
+                <div className="form-group">
+                  <label htmlFor="role" className="form-label">
                     Role
+                    <span className="text-red-500 ml-1" aria-label="required">*</span>
                   </label>
-                  <div className="mt-1">
-                    <select
-                      id="role"
-                      name="role"
-                      value={formData.role}
-                      onChange={handleChange}
-                      className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                    >
-                      <option value="student">Student</option>
-                      <option value="faculty">Faculty</option>
-                    </select>
-                  </div>
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    disabled={loading}
+                    className="block w-full px-3 py-2 border border-border-light bg-background-surface text-text-primary rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                  </select>
                 </div>
 
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating account...
-                      </>
-                    ) : (
-                      'Create account'
-                    )}
-                  </button>
+                {/* Password Field */}
+                <div className="form-group">
+                  <label htmlFor="password" className="form-label">
+                    Password
+                    <span className="text-red-500 ml-1" aria-label="required">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-4 w-4 text-text-muted" aria-hidden="true" />
+                    </div>
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder="Create a password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      error={!!errors.password}
+                      aria-describedby={errors.password ? "password-error" : undefined}
+                      aria-invalid={!!errors.password}
+                      required
+                      disabled={loading}
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
+                      onClick={togglePasswordVisibility}
+                      disabled={loading}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-text-muted hover:text-text-secondary" aria-hidden="true" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-text-muted hover:text-text-secondary" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                  
+                  {/* Password Strength Indicator */}
+                  {formData.password && !errors.password && (
+                    <div className="mt-2">
+                      <div className="flex justify-between items-center">
+                        <div className="w-full bg-border-light rounded-full h-2 mr-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all duration-300 ${getStrengthColor(passwordStrength)}`} 
+                            style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-text-muted whitespace-nowrap ml-2">
+                          {getStrengthText(passwordStrength)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {errors.password && (
+                    <p id="password-error" className="form-error" role="alert" aria-live="polite">
+                      {errors.password}
+                    </p>
+                  )}
                 </div>
-              </form>
+
+                {/* Confirm Password Field */}
+                <div className="form-group">
+                  <label htmlFor="confirmPassword" className="form-label">
+                    Confirm Password
+                    <span className="text-red-500 ml-1" aria-label="required">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-4 w-4 text-text-muted" aria-hidden="true" />
+                    </div>
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder="Confirm your password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      error={!!errors.confirmPassword}
+                      aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
+                      aria-invalid={!!errors.confirmPassword}
+                      required
+                      disabled={loading}
+                      className="pl-10 pr-10"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center">
+                      {formData.confirmPassword && formData.password === formData.confirmPassword && !errors.confirmPassword && (
+                        <CheckCircle className="h-4 w-4 text-success-500 mr-2" aria-hidden="true" />
+                      )}
+                      <button
+                        type="button"
+                        className="pr-3 flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
+                        onClick={toggleConfirmPasswordVisibility}
+                        disabled={loading}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        aria-pressed={showConfirmPassword}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-text-muted hover:text-text-secondary" aria-hidden="true" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-text-muted hover:text-text-secondary" aria-hidden="true" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  {errors.confirmPassword && (
+                    <p id="confirmPassword-error" className="form-error" role="alert" aria-live="polite">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  loading={loading}
+                  disabled={loading}
+                >
+                  {loading ? 'Creating account...' : 'Create account'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border-light" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-background-surface text-text-muted">Already have an account?</span>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Link to="/login">
+                  <Button variant="outline" className="w-full">
+                    Sign in to your account
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div className="relative hidden w-0 flex-1 lg:block">
-        <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-indigo-600 to-purple-800"></div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-12">
-          <h1 className="text-4xl font-bold text-white text-center mb-6">Face Recognition Attendance System</h1>
-          <p className="text-white text-lg text-center max-w-md opacity-90">
-            Join our platform and experience the future of attendance tracking
-          </p>
-          <div className="mt-8 bg-white/20 backdrop-blur-sm p-6 rounded-lg shadow-lg max-w-md">
-            <h2 className="text-white text-xl font-semibold mb-4">Benefits of registration:</h2>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-5 w-5 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                <span className="text-white">Contactless attendance marking</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-5 w-5 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                <span className="text-white">Secure facial recognition technology</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-5 w-5 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                <span className="text-white">Real-time attendance tracking</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircleIcon className="h-5 w-5 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                <span className="text-white">View and download your attendance history</span>
-              </li>
-            </ul>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-xs text-text-muted">
+          By creating an account, you agree to our{' '}
+          <a href="#" className="text-primary-600 hover:text-primary-500">Terms of Service</a>
+          {' '}and{' '}
+          <a href="#" className="text-primary-600 hover:text-primary-500">Privacy Policy</a>
+        </p>
       </div>
     </div>
   )

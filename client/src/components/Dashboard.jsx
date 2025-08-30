@@ -224,14 +224,14 @@ const ModernDashboard = () => {
                         <div className="flex items-center gap-2">
                           <ClockIcon className="h-4 w-4 text-gray-500" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Check-in: {formatTime(todayAttendance.checkIn)}
+                            Check-in: {formatTime(todayAttendance.checkIn?.time)}
                           </span>
                         </div>
-                        {todayAttendance.checkOut && (
+                        {todayAttendance.checkOut?.time && (
                           <div className="flex items-center gap-2">
                             <ClockIcon className="h-4 w-4 text-gray-500" />
                             <span className="text-sm text-gray-600 dark:text-gray-400">
-                              Check-out: {formatTime(todayAttendance.checkOut)}
+                              Check-out: {formatTime(todayAttendance.checkOut?.time)}
                             </span>
                           </div>
                         )}
@@ -319,9 +319,9 @@ const ModernDashboard = () => {
                               {format(new Date(attendance.date || attendance.createdAt), 'EEEE, MMM d')}
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-3">
-                              <span>Check-in: {formatTime(attendance.checkIn)}</span>
-                              {attendance.checkOut && (
-                                <span>Check-out: {formatTime(attendance.checkOut)}</span>
+                              <span>Check-in: {formatTime(attendance.checkIn?.time)}</span>
+                              {attendance.checkOut?.time && (
+                                <span>Check-out: {formatTime(attendance.checkOut?.time)}</span>
                               )}
                             </div>
                           </div>

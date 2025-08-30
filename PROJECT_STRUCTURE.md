@@ -5,185 +5,267 @@
 
 ---
 
+## 🚀 Quick Start Scripts
+
+### 🎯 Main Commands
+```bash
+# Start all services (client, server, admin)
+./start-all.sh
+
+# Start with dependency installation
+./start-all.sh --install
+
+# Start using Docker
+./start-all.sh --docker
+
+# Stop all services
+./stop-all.sh
+
+# Using npm scripts (alternative)
+npm run dev              # Start all services
+npm run install-all      # Install all dependencies and start
+npm run docker:dev       # Start with Docker
+npm run stop            # Stop all services
+```
+
+---
+
 ## 🏗️ Complete Project Structure
 
 ```
 Face-Recognition-Attendance-System/
 ├── 📄 README.md                    # Main project documentation
-├── 📄 LICENSE                      # MIT License
+├── 📄 PROJECT_STRUCTURE.md         # Project structure documentation
+├── 📄 package.json                 # Root package.json with workspace config
 ├── 📄 .gitignore                   # Git ignore rules
 ├── 📄 .dockerignore                # Docker ignore rules
+├── 📄 .env.example                 # Environment variables template
+├── 🚀 start-all.sh                 # Main startup script for all services
+├── 🛑 stop-all.sh                  # Script to stop all services
 ├── 🐳 Dockerfile                   # Production Docker configuration
 ├── 🐳 docker-compose.yml           # Production Docker Compose
 ├── 🐳 docker-compose.dev.yml       # Development Docker Compose
-├── ⚙️ .env.example                 # Environment variables template
-├── 🚀 setup.sh                     # Automated setup script
-│
-├── 📂 docs/                        # Documentation
-│   ├── 📄 PRD.md                   # Product Requirements Document
-│   ├── 📄 API.md                   # API Documentation
-│   ├── 📄 DEPLOYMENT.md            # Deployment Guide
-│   └── 📄 CONTRIBUTING.md          # Contribution Guidelines
-│
-├── 📂 scripts/                     # Deployment & Management Scripts
-│   ├── 🚀 deploy.sh               # Main deployment script
-│   ├── 📊 monitor.sh              # System monitoring
-│   ├── 💾 backup.sh               # Database backup
-│   └── 🧹 cleanup.sh              # System cleanup
 │
 ├── 📂 docker/                      # Docker Configuration Files
-│   ├── ⚙️ nginx.conf              # Nginx configuration
-│   ├── ⚙️ supervisord.conf        # Supervisor configuration
+│   ├── ⚙️ nginx.conf              # Nginx reverse proxy configuration
+│   ├── ⚙️ supervisord.conf        # Supervisor process management
 │   ├── 🚀 startup.sh              # Container startup script
-│   ├── 📄 mongo-init.js           # MongoDB initialization
-│   └── 🔒 ssl/                    # SSL certificates directory
+│   └── 📄 mongo-init.js           # MongoDB initialization script
 │
-├── 📂 server/                      # Node.js Backend
-│   ├── 📄 package.json            # Server dependencies
-│   ├── 📄 index.js                # Main server file
+├── 📂 server/                      # Node.js Backend API
+│   ├── 📄 package.json            # Server dependencies & scripts
+│   ├── 📄 index.js                # Main server entry point
+│   ├── 📄 seedData.js              # Database seeding script
+│   ├── 📄 SEEDING_INSTRUCTIONS.md  # Database setup instructions
+│   ├── 📄 LOGIN_CREDENTIALS.md     # Login credentials for testing
 │   ├── 🐳 Dockerfile.dev          # Development Docker config
 │   ├── ⚙️ .env.local              # Local environment variables
-│   │
-│   ├── 📂 controllers/            # Request handlers
-│   │   ├── 📄 authController.js   # Authentication logic
-│   │   ├── 📄 userController.js   # User management
-│   │   ├── 📄 attendanceController.js # Attendance logic
-│   │   ├── 📄 eventController.js  # Event management
-│   │   └── 📄 departmentController.js # Department management
-│   │
-│   ├── 📂 models/                 # Database Models
-│   │   ├── 📄 User.js             # User schema
-│   │   ├── 📄 Attendance.js       # Attendance schema
-│   │   ├── 📄 Event.js            # Event schema
-│   │   ├── 📄 EventAttendance.js  # Event attendance schema
-│   │   └── 📄 Department.js       # Department schema
-│   │
-│   ├── 📂 routes/                 # API Routes
-│   │   ├── 📄 auth.js             # Authentication routes
-│   │   ├── 📄 users.js            # User routes
-│   │   ├── 📄 attendance.js       # Attendance routes
-│   │   ├── 📄 events.js           # Event routes
-│   │   ├── 📄 departments.js      # Department routes
-│   │   └── 📄 demo.js             # Demo/testing routes
+│   ├── 📄 Face_Recognition_Attendance_API.postman_collection.json
 │   │
 │   ├── 📂 middleware/             # Express Middleware
-│   │   ├── 📄 auth.js             # JWT authentication
-│   │   ├── 📄 validation.js       # Input validation
-│   │   ├── 📄 rateLimiting.js     # Rate limiting
-│   │   └── 📄 errorHandler.js     # Error handling
+│   │   └── 📄 auth.js             # JWT authentication middleware
 │   │
-│   ├── 📂 utils/                  # Utility Functions
-│   │   ├── 📄 imagekit.js         # ImageKit integration
-│   │   ├── 📄 qrCodeHelper.js     # QR code utilities
-│   │   ├── 📄 hometempate.js      # Home page template
-│   │   ├── 📄 emailService.js     # Email notifications
-│   │   └── 📄 logger.js           # Logging utility
+│   ├── 📂 models/                 # MongoDB Schemas
+│   │   ├── 📄 User.js             # User model schema
+│   │   ├── 📄 Attendance.js       # Attendance record schema
+│   │   ├── 📄 Event.js            # Event model schema
+│   │   ├── 📄 EventAttendance.js  # Event attendance junction table
+│   │   └── 📄 Department.js       # Department model schema
 │   │
-│   └── 📂 uploads/                # File uploads directory
+│   ├── 📂 routes/                 # API Route Handlers
+│   │   ├── 📄 auth.js             # Authentication routes
+│   │   ├── 📄 users.js            # User management routes
+│   │   ├── 📄 attendance.js       # Attendance tracking routes
+│   │   ├── 📄 events.js           # Event management routes
+│   │   ├── 📄 departments.js      # Department management routes
+│   │   └── 📄 demo.js             # Demo/testing routes
+│   │
+│   └── 📂 utils/                  # Server Utility Functions
+│       ├── 📄 imagekit.js         # ImageKit cloud storage integration
+│       ├── 📄 qrCodeHelper.js     # QR code generation utilities
+│       └── 📄 hometempate.js      # Home page template
 │
-├── 📂 client/                     # React Frontend (User Interface)
-│   ├── 📄 package.json            # Client dependencies
+├── 📂 client/                     # React User Frontend
+│   ├── 📄 package.json            # Client dependencies & scripts
 │   ├── 📄 index.html              # HTML template
-│   ├── 📄 vite.config.js          # Vite configuration
-│   ├── 📄 tailwind.config.js      # TailwindCSS config
-│   ├── 📄 postcss.config.js       # PostCSS config
+│   ├── 📄 vite.config.js          # Vite build configuration
+│   ├── 📄 tailwind.config.js      # TailwindCSS configuration
+│   ├── 📄 postcss.config.js       # PostCSS configuration
 │   ├── 📄 eslint.config.js        # ESLint configuration
+│   ├── 📄 README.md               # Client-specific documentation
 │   ├── 🐳 Dockerfile.dev          # Development Docker config
 │   │
 │   ├── 📂 public/                 # Static Assets
-│   │   ├── 🖼️ icons8-attendance-48.png # App icon
+│   │   ├── 🖼️ icons8-attendance-48.png # Application icon
+│   │   ├── 🖼️ Face Recognition Attendance System-logo.png
+│   │   ├── 🖼️ apple-touch-icon.png
+│   │   ├── 🖼️ favicon.ico
+│   │   ├── 🖼️ favicon.svg
+│   │   ├── 📄 site.webmanifest     # Web app manifest
 │   │   └── 🖼️ vite.svg           # Vite logo
 │   │
 │   └── 📂 src/                    # Source Code
 │       ├── 📄 main.jsx            # Application entry point
 │       ├── 📄 App.jsx             # Main App component
-│       ├── 🎨 index.css           # Global styles
-│       │
-│       ├── 📂 components/         # Reusable Components
-│       │   ├── 📄 Layout.jsx      # Main layout wrapper
-│       │   ├── 📄 PrivateRoute.jsx # Protected route component
-│       │   ├── 📄 NotFound.jsx    # 404 page component
-│       │   ├── 📄 Dashboard.jsx   # User dashboard
-│       │   ├── 📄 Profile.jsx     # User profile
-│       │   ├── 📄 Events.jsx      # Events listing
-│       │   ├── 📄 AttendanceCapture.jsx # Face capture
-│       │   ├── 📄 AttendanceHistory.jsx # Attendance history
-│       │   └── 📄 QRCodeScanner.jsx # QR code scanner
+│       ├── 🎨 index.css           # Global styles & Tailwind imports
 │       │
 │       ├── 📂 Auth/               # Authentication Components
-│       │   ├── 📄 Login.jsx       # Login form
-│       │   └── 📄 Register.jsx    # Registration form
+│       │   ├── 📄 Login.jsx       # User login form
+│       │   └── 📄 Register.jsx    # User registration form
 │       │
-│       ├── 📂 context/            # React Context
-│       │   └── 📄 AuthContext.jsx # Authentication context
+│       ├── 📂 components/         # Reusable UI Components
+│       │   ├── 📄 Layout.jsx      # Main layout wrapper
+│       │   ├── 📄 PrivateRoute.jsx # Protected route component
+│       │   ├── 📄 NotFound.jsx    # 404 error page
+│       │   ├── 📄 Dashboard.jsx   # User dashboard
+│       │   ├── 📄 Profile.jsx     # User profile management
+│       │   ├── 📄 Events.jsx      # Events listing component
+│       │   ├── 📄 AttendanceCapture.jsx # Face recognition capture
+│       │   ├── 📄 AttendanceHistory.jsx # Attendance history view
+│       │   ├── 📄 QRCodeScanner.jsx # QR code scanning component
+│       │   └── 📂 ui/             # Shared UI Components
+│       │       ├── 📄 Avatar.jsx
+│       │       ├── 📄 Badge.jsx
+│       │       ├── 📄 Button.jsx
+│       │       ├── 📄 Card.jsx
+│       │       ├── 📄 Chart.jsx
+│       │       ├── 📄 Forms.jsx
+│       │       ├── 📄 Input.jsx
+│       │       ├── 📄 Progress.jsx
+│       │       ├── 📄 ThemeToggle.jsx
+│       │       ├── 📄 Animation.jsx
+│       │       ├── 📄 Accessibility.jsx
+│       │       ├── 📄 AdvancedInteractions.jsx
+│       │       ├── 📄 Performance.jsx
+│       │       └── 📄 index.js
 │       │
-│       ├── 📂 utils/              # Utility Functions
-│       │   ├── 📄 api.js          # API client
-│       │   ├── 📄 faceRecognition.js # Face recognition utils
-│       │   └── 📄 helpers.js      # General helpers
+│       ├── 📂 context/            # React Context Providers
+│       │   ├── 📄 AuthContext.jsx # Authentication state management
+│       │   └── 📄 ThemeContext.jsx # Theme management
+│       │
+│       ├── 📂 hooks/              # Custom React Hooks
+│       │   ├── 📄 useDebouncedValue.js
+│       │   ├── 📄 useKeyboardNavigation.js
+│       │   ├── 📄 useMultiStepForm.js
+│       │   └── 📄 useTheme.js
+│       │
+│       ├── 📂 lib/                # Library Utilities
+│       │   ├── 📄 animations.js
+│       │   ├── 📄 theme-context.js
+│       │   └── 📄 utils.js
+│       │
+│       ├── 📂 pages/              # Page Components
+│       │   ├── 📄 EventAttendees.jsx
+│       │   ├── 📄 EventDetail.jsx
+│       │   └── 📄 EventForm.jsx
+│       │
+│       ├── 📂 utils/              # Client Utility Functions
+│       │   └── 📄 api.js          # API client configuration
 │       │
 │       └── 📂 assets/             # Static Assets
 │           └── 🖼️ react.svg      # React logo
 │
 ├── 📂 admin/                      # React Admin Panel
-│   ├── 📄 package.json            # Admin dependencies
+│   ├── 📄 package.json            # Admin dependencies & scripts
 │   ├── 📄 index.html              # HTML template
-│   ├── 📄 vite.config.js          # Vite configuration
-│   ├── 📄 tailwind.config.js      # TailwindCSS config
-│   ├── 📄 postcss.config.js       # PostCSS config
+│   ├── 📄 vite.config.js          # Vite build configuration
+│   ├── 📄 tailwind.config.js      # TailwindCSS configuration
+│   ├── 📄 postcss.config.js       # PostCSS configuration
 │   ├── 📄 eslint.config.js        # ESLint configuration
+│   ├── 📄 README.md               # Admin-specific documentation
 │   ├── 🐳 Dockerfile.dev          # Development Docker config
 │   │
 │   ├── 📂 public/                 # Static Assets
-│   │   └── 🖼️ vite.svg           # Vite logo
+│   │   ├── 🖼️ Face Recognition Attendance System-logo.png
+│   │   └── 🖼️ vite.svg
 │   │
 │   └── 📂 src/                    # Source Code
 │       ├── 📄 main.jsx            # Application entry point
-│       ├── 📄 App.jsx             # Main App component
-│       ├── 🎨 index.css           # Global styles
+│       ├── 📄 App.jsx             # Main Admin App component
+│       ├── 🎨 index.css           # Global admin styles
 │       │
-│       ├── 📂 components/         # Reusable Components
+│       ├── 📂 components/         # Admin UI Components
 │       │   ├── 📄 AdminLayout.jsx # Admin layout wrapper
-│       │   ├── 📄 AdminPrivateRoute.jsx # Protected admin route
-│       │   └── 📄 NotFound.jsx    # 404 page component
+│       │   ├── 📄 AdminPrivateRoute.jsx # Protected admin routes
+│       │   ├── 📄 NotFound.jsx    # 404 error page
+│       │   │
+│       │   ├── 📂 attendance/     # Attendance Management Components
+│       │   │   ├── 📄 AttendanceFilters.jsx
+│       │   │   ├── 📄 AttendanceRecord.jsx
+│       │   │   ├── 📄 AttendanceStats.jsx
+│       │   │   └── 📄 ImageViewModal.jsx
+│       │   │
+│       │   ├── 📂 departments/    # Department Management Components
+│       │   │   ├── 📄 DepartmentCard.jsx
+│       │   │   ├── 📄 DepartmentDetailModal.jsx
+│       │   │   ├── 📄 DepartmentFilters.jsx
+│       │   │   ├── 📄 DepartmentModal.jsx
+│       │   │   └── 📄 DepartmentStats.jsx
+│       │   │
+│       │   ├── 📂 events/         # Event Management Components
+│       │   │   ├── 📄 EventAttendeeFilters.jsx
+│       │   │   ├── 📄 EventAttendeeList.jsx
+│       │   │   ├── 📄 EventAttendeeStats.jsx
+│       │   │   ├── 📄 EventCard.jsx
+│       │   │   ├── 📄 EventDetailInfo.jsx
+│       │   │   ├── 📄 EventFilters.jsx
+│       │   │   ├── 📄 EventFormFields.jsx
+│       │   │   ├── 📄 EventFormHeader.jsx
+│       │   │   ├── 📄 EventList.jsx
+│       │   │   └── 📄 EventStats.jsx
+│       │   │
+│       │   ├── 📂 users/          # User Management Components
+│       │   │   ├── 📄 UserActions.jsx
+│       │   │   ├── 📄 UserAttendanceHistory.jsx
+│       │   │   ├── 📄 UserDetailInfo.jsx
+│       │   │   └── 📄 UserEditForm.jsx
+│       │   │
+│       │   └── 📂 ui/             # Shared Admin UI Components
+│       │       ├── 📄 Avatar.jsx
+│       │       ├── 📄 Badge.jsx
+│       │       ├── 📄 Button.jsx
+│       │       ├── 📄 Card.jsx
+│       │       ├── 📄 Input.jsx
+│       │       └── 📄 LoadingSkeleton.jsx
 │       │
-│       ├── 📂 pages/              # Page Components
-│       │   ├── 📄 AdminLogin.jsx  # Admin login
+│       ├── 📂 context/            # Admin Context Providers
+│       │   └── 📄 AdminAuthContext.jsx # Admin authentication state
+│       │
+│       ├── 📂 lib/                # Admin Library Utilities
+│       │   ├── 📄 api.js          # Admin API client
+│       │   └── 📄 utils.js        # Admin utility functions
+│       │
+│       ├── 📂 pages/              # Admin Page Components
+│       │   ├── 📄 AdminLogin.jsx  # Admin login page
 │       │   ├── 📄 Dashboard.jsx   # Admin dashboard
-│       │   ├── 📄 Users.jsx       # User management
-│       │   ├── 📄 UserDetail.jsx  # User details
-│       │   ├── 📄 Events.jsx      # Event management
+│       │   ├── 📄 Users.jsx       # User management page
+│       │   ├── 📄 UserDetail.jsx  # User details page
+│       │   ├── 📄 Events.jsx      # Event management page
 │       │   ├── 📄 EventForm.jsx   # Event creation/editing
-│       │   ├── 📄 EventDetail.jsx # Event details
-│       │   ├── 📄 EventAttendees.jsx # Event attendees
-│       │   ├── 📄 Attendance.jsx  # Attendance reports
-│       │   └── 📄 Departments.jsx # Department management
+│       │   ├── 📄 EventDetail.jsx # Event details page
+│       │   ├── 📄 EventAttendees.jsx # Event attendees page
+│       │   ├── 📄 Attendance.jsx  # Attendance reports page
+│       │   └── 📄 Departments.jsx # Department management page
 │       │
-│       ├── 📂 context/            # React Context
-│       │   └── 📄 AdminAuthContext.jsx # Admin auth context
-│       │
-│       └── 📂 utils/              # Utility Functions
-│           ├── 📄 api.js          # API client
-│           └── 📄 helpers.js      # General helpers
+│       └── 📂 utils/              # Admin Utility Functions
 │
-├── 📂 uploads/                    # File Uploads (Development)
-│   ├── 📂 faces/                 # Face image uploads
-│   ├── 📂 documents/             # Document uploads
-│   └── 📂 temp/                  # Temporary files
-│
-├── 📂 logs/                       # Application Logs
-│   ├── 📄 app.log                # Application logs
-│   ├── 📄 error.log              # Error logs
-│   └── 📄 access.log             # Access logs
-│
-└── 📂 backups/                   # Database Backups
-    ├── 📄 mongodb_backup_20250822.gz
-    └── 📄 ...
+└── 📂 logs/                       # Application Logs (Generated at runtime)
+    ├── 📄 server.log              # Server application logs
+    ├── 📄 client.log              # Client development logs
+    └── 📄 admin.log               # Admin panel development logs
 ```
 
 ---
 
 ## 🚀 Key Components Explained
+
+### 🎯 **Startup Scripts**
+
+| Script | Purpose |
+|--------|---------|
+| `start-all.sh` | Main startup script for all services |
+| `stop-all.sh` | Stop all running services |
+| `package.json` | Root workspace configuration with npm scripts |
 
 ### 🐳 **Docker Configuration**
 
@@ -199,49 +281,90 @@ Face-Recognition-Attendance-System/
 
 | Directory | Purpose |
 |-----------|---------|
-| `controllers/` | Business logic handlers |
-| `models/` | MongoDB schema definitions |
-| `routes/` | API endpoint definitions |
-| `middleware/` | Express middleware functions |
-| `utils/` | Shared utility functions |
+| `server/models/` | MongoDB schema definitions |
+| `server/routes/` | API endpoint definitions |
+| `server/middleware/` | Express middleware functions |
+| `server/utils/` | Shared utility functions |
 
 ### 🌐 **Frontend Architecture**
 
+#### **Client Application (User Interface)**
 | Directory | Purpose |
 |-----------|---------|
-| `client/src/components/` | User interface components |
+| `client/src/components/` | Reusable UI components |
 | `client/src/Auth/` | Authentication forms |
+| `client/src/context/` | React state management |
+| `client/src/hooks/` | Custom React hooks |
+| `client/src/lib/` | Library utilities |
+
+#### **Admin Panel**
+| Directory | Purpose |
+|-----------|---------|
 | `admin/src/pages/` | Admin panel pages |
-| `context/` | React state management |
-| `utils/` | Frontend utility functions |
-
-### 📜 **Scripts & Automation**
-
-| Script | Purpose |
-|--------|---------|
-| `setup.sh` | Interactive project setup |
-| `scripts/deploy.sh` | Deployment management |
-| `scripts/monitor.sh` | System monitoring |
-| `scripts/backup.sh` | Database backup |
+| `admin/src/components/` | Admin-specific components |
+| `admin/src/context/` | Admin state management |
 
 ---
 
-## 🔧 **Configuration Files**
+## 📊 **Technology Stack**
 
-### **Environment Configuration**
-- `.env.example` - Template for environment variables
-- `server/.env.local` - Server-specific environment
-- Various `package.json` files for dependencies
+### **Frontend Technologies**
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **React** | 19.0.0 | Component-based UI library |
+| **Vite** | Latest | Lightning-fast build tool |
+| **TailwindCSS** | Latest | Utility-first CSS framework |
+| **TensorFlow.js** | 4.22.0 | Client-side ML for face recognition |
+| **BlazeFace** | 0.1.0 | Lightweight face detection model |
+| **Framer Motion** | 11.1.17 | Animation library |
 
-### **Build Configuration**
-- `vite.config.js` - Frontend build configuration
-- `tailwind.config.js` - CSS framework configuration
-- `eslint.config.js` - Code linting rules
+### **Backend Technologies**
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Node.js** | 18+ | JavaScript runtime |
+| **Express.js** | 4.21.2 | Web application framework |
+| **MongoDB** | 7.0+ | NoSQL database |
+| **Mongoose** | 8.12.2 | MongoDB object modeling |
+| **JWT** | 9.0.2 | Authentication tokens |
+| **ImageKit** | 6.0.0 | Cloud image storage |
 
-### **Docker Configuration**
-- Multi-environment Docker setups
-- Health checks and monitoring
-- Service orchestration and networking
+---
+
+## 🔄 **Development Workflow**
+
+### **Local Development**
+```bash
+# Install all dependencies
+npm run install-all
+
+# Start all services
+./start-all.sh
+
+# Or use npm scripts
+npm run dev
+
+# Stop all services
+./stop-all.sh
+```
+
+### **Docker Development**
+```bash
+# Start with Docker
+./start-all.sh --docker
+
+# Or use Docker Compose directly
+docker-compose -f docker-compose.dev.yml up --build
+
+# Stop Docker services
+docker-compose -f docker-compose.dev.yml down
+```
+
+### **Service URLs**
+- 🌐 **Client Application**: http://localhost:5173
+- 👨‍💼 **Admin Panel**: http://localhost:5174
+- 🖥️ **API Server**: http://localhost:4000
+- 🗄️ **MongoDB Express**: http://localhost:8081 (Docker only)
+- 📊 **Redis Commander**: http://localhost:8082 (Docker only)
 
 ---
 
@@ -250,27 +373,28 @@ Face-Recognition-Attendance-System/
 ```mermaid
 graph TB
     subgraph "🌐 Frontend Layer"
-        A[👤 User Client] --> B[📱 Admin Panel]
+        A[👤 User Client<br/>Port: 5173] 
+        B[📱 Admin Panel<br/>Port: 5174]
     end
     
     subgraph "🔄 Reverse Proxy"
-        C[🌐 Nginx]
+        C[🌐 Nginx<br/>Port: 80/443]
     end
     
     subgraph "🖥️ Application Layer"
-        D[🚀 Express API]
+        D[🚀 Express API<br/>Port: 4000]
         E[🔐 JWT Middleware]
-        F[🧠 Face Recognition]
+        F[🧠 Face Recognition<br/>TensorFlow.js]
     end
     
     subgraph "💾 Data Layer"
-        G[🗄️ MongoDB]
-        H[🔄 Redis Cache]
+        G[🗄️ MongoDB<br/>Port: 27017]
+        H[🔄 Redis Cache<br/>Port: 6379]
         I[☁️ ImageKit CDN]
     end
     
-    A --> C
-    B --> C
+    A --> D
+    B --> D
     C --> D
     D --> E
     E --> F
@@ -281,27 +405,68 @@ graph TB
 
 ---
 
-## 🎯 **Development Workflow**
+## 🔧 **Configuration Management**
 
-1. **📋 Planning**: Requirements in `docs/PRD.md`
-2. **🔧 Setup**: Automated with `setup.sh`
-3. **💻 Development**: Hot reload with Docker Compose
-4. **🧪 Testing**: API testing with Postman collections
-5. **🚀 Deployment**: Containerized with Docker
-6. **📊 Monitoring**: Health checks and logging
-7. **💾 Backup**: Automated database backup
+### **Environment Variables**
+- `.env.example` - Template for environment variables
+- `server/.env.local` - Server-specific environment
+- Docker environment configurations
+
+### **Build Configuration**
+- `vite.config.js` - Frontend build configuration
+- `tailwind.config.js` - CSS framework configuration
+- `eslint.config.js` - Code linting rules
+
+### **Package Management**
+- Root `package.json` with workspace configuration
+- Individual service `package.json` files
+- npm workspaces for dependency management
 
 ---
 
-## 🔒 **Security Measures**
+## 🔒 **Security Features**
 
 - **🔐 Authentication**: JWT-based secure authentication
-- **🛡️ Authorization**: Role-based access control
-- **🔒 Data Protection**: Encrypted passwords and secure sessions
-- **🚫 Rate Limiting**: API rate limiting and DDoS protection
+- **🛡️ Authorization**: Role-based access control (User/Admin)
+- **🔒 Data Protection**: Encrypted passwords with bcrypt
 - **✅ Input Validation**: Comprehensive input sanitization
-- **🔍 Audit Logging**: Complete audit trail
+- **🚫 CORS Protection**: Configurable CORS policies
+- **🛡️ Helmet Security**: HTTP security headers
 
 ---
 
-*This structure represents a production-ready, scalable, and maintainable codebase designed for educational and professional use.*
+## 📈 **Monitoring & Logging**
+
+- **📋 Application Logs**: Real-time logging to `logs/` directory
+- **🔍 Error Tracking**: Centralized error handling
+- **📊 Performance Monitoring**: Service health checks
+- **🐳 Container Monitoring**: Docker health checks
+
+---
+
+## 🎯 **Production Deployment**
+
+### **Docker Production**
+```bash
+# Build and deploy production
+docker-compose up --build -d
+
+# Monitor logs
+docker-compose logs -f
+
+# Scale services
+docker-compose up --scale client=2 --scale admin=2
+```
+
+### **Manual Deployment**
+```bash
+# Build all applications
+npm run build
+
+# Start production server
+cd server && npm start
+```
+
+---
+
+*This structure represents a production-ready, scalable, and maintainable codebase designed for educational and professional use. The project follows modern development practices with comprehensive tooling for development, testing, and deployment.*

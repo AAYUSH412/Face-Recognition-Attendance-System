@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { 
@@ -30,6 +30,7 @@ const Users = () => {
   const [selectedRole, setSelectedRole] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalUsers, setTotalUsers] = useState(0) // Add total users count
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newUser, setNewUser] = useState({
     name: '',
@@ -41,71 +42,80 @@ const Users = () => {
   })
   const [departments, setDepartments] = useState([])
   
-  // Fetch users on component mount
-  useEffect(() => {
-    fetchUsers()
-    fetchDepartments()
-  }, [currentPage, selectedRole])
-  
-  const fetchUsers = async () => {
+  // Fetch functions with useCallback to avoid dependency issues
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
-      // In a real implementation, you would use query params for pagination and filtering
-      const response = await usersAPI.getAll()
-      
-      // Filter data based on search term and role
-      let filteredUsers = response.data
-      
-      if (selectedRole) {
-        filteredUsers = filteredUsers.filter(user => user.role === selectedRole)
+      // Use server-side pagination and filtering
+      const params = {
+        page: currentPage,
+        limit: 10, // Items per page
+        ...(selectedRole && { role: selectedRole }),
+        ...(searchTerm && { search: searchTerm })
       }
       
-      if (searchTerm) {
-        filteredUsers = filteredUsers.filter(user => 
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.registrationId?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      const response = await usersAPI.getAll(params)
+      
+      // Handle server-side paginated response
+      if (response.data.users && response.data.pagination) {
+        // Server returned paginated response
+        setUsers(response.data.users)
+        setTotalPages(response.data.pagination.pages)
+        setTotalUsers(response.data.pagination.total)
+      } else if (Array.isArray(response.data)) {
+        // Fallback: server returned direct array (older API version)
+        setUsers(response.data)
+        setTotalPages(1)
+        setTotalUsers(response.data.length)
+      } else {
+        // Unexpected response format
+        console.error('Unexpected API response format:', response.data)
+        setUsers([])
+        setTotalPages(1)
+        setTotalUsers(0)
       }
-      
-      // Simple pagination (client-side for demo)
-      const itemsPerPage = 10
-      const totalItems = filteredUsers.length
-      const pages = Math.ceil(totalItems / itemsPerPage)
-      
-      setTotalPages(pages || 1)
-      
-      // Adjust current page if it's out of bounds after filtering
-      const validPage = Math.min(currentPage, pages || 1)
-      if (validPage !== currentPage) {
-        setCurrentPage(validPage)
-      }
-      
-      // Get current page items
-      const startIndex = (validPage - 1) * itemsPerPage
-      const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage)
-      
-      setUsers(paginatedUsers)
     } catch (error) {
       console.error('Error fetching users:', error)
       toast.error('Failed to load users')
+      setUsers([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, selectedRole, searchTerm])
   
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
       const response = await departmentsAPI.getAll()
-      setDepartments(response.data)
+      // Departments API returns direct array
+      setDepartments(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Error fetching departments:', error)
+      setDepartments([]) // Set empty array on error
     }
-  }
+  }, [])
+
+  // Fetch users on component mount and when dependencies change
+  useEffect(() => {
+    fetchUsers()
+    fetchDepartments()
+  }, [fetchUsers, fetchDepartments])
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1) // Reset to first page when search changes
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
   
   const handleRoleFilter = (role) => {
     setSelectedRole(role)
     setCurrentPage(1) // Reset to first page on new filter
+  }
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value)
   }
   
   const handleInputChange = (e) => {
@@ -182,7 +192,7 @@ const Users = () => {
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-10"
               />
             </div>
@@ -323,9 +333,12 @@ const Users = () => {
             <div className="border-t p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
+                  Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalUsers)} of {totalUsers} users
                 </p>
                 <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"

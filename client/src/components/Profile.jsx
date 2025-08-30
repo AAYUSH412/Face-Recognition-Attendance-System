@@ -22,7 +22,7 @@ import * as tf from '@tensorflow/tfjs';
 import * as blazeface from '@tensorflow-models/blazeface';
 
 const Profile = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, updateUser } = useAuth();
   const [faceData, setFaceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [captureMode, setCaptureMode] = useState(false);
@@ -249,18 +249,25 @@ const Profile = () => {
     
     setSavingProfile(true);
     try {
-      const formData = new FormData();
-      formData.append('name', profileForm.name);
+      let profileImageData = null;
       
+      // Convert image file to base64 if present
       if (fileInputRef.current.files[0]) {
-        formData.append('profileImage', fileInputRef.current.files[0]);
+        const file = fileInputRef.current.files[0];
+        profileImageData = await convertFileToBase64(file);
       }
       
-      await api.put('/api/users/profile', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const updateData = {
+        name: profileForm.name,
+        ...(profileImageData && { profileImageData })
+      };
+      
+      const response = await api.put('/api/users/profile', updateData);
+      
+      // Update user in context if response contains updated user data
+      if (response.data.user) {
+        updateUser(response.data.user);
+      }
       
       toast.success('Profile updated successfully');
       setEditingProfile(false);
@@ -270,6 +277,16 @@ const Profile = () => {
     } finally {
       setSavingProfile(false);
     }
+  };
+
+  // Helper function to convert file to base64
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   return (

@@ -51,7 +51,7 @@ export const usersAPI = {
   bulkDelete: (userIds) => api.delete('/users/bulk', { data: { userIds } }),
   bulkStatus: (userIds, isActive) => api.patch('/users/bulk-status', { userIds, isActive }),
   getStats: () => api.get('/users/stats'),
-  export: (params) => api.get('/users/export', { params, responseType: 'blob' }),
+  export: (params) => api.get('/users/export', { params }),
 };
 
 // Attendance endpoints
@@ -75,6 +75,7 @@ export const eventsAPI = {
   delete: (id) => api.delete(`/events/${id}`),
   getAttendees: (id, params) => api.get(`/events/${id}/attendees`, { params }),
   generateQR: (id) => api.post(`/events/${id}/qr`),
+  regenerateQR: (id) => api.post(`/events/${id}/regenerate-qr`),
 };
 
 // Departments endpoints

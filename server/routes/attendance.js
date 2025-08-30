@@ -674,6 +674,63 @@ router.get('/', adminAuth, async (req, res) => {
   }
 });
 
+// @route   PATCH api/attendance/bulk-verify
+// @desc    Bulk verify attendance records (admin only)
+// @access  Private/Admin
+router.patch('/bulk-verify', adminAuth, async (req, res) => {
+  try {
+    const { recordIds, action } = req.body;
+    
+    if (!recordIds || !Array.isArray(recordIds) || recordIds.length === 0) {
+      return res.status(400).json({ message: 'Record IDs array is required' });
+    }
+    
+    if (!action || !action.type || (action.type !== 'checkIn' && action.type !== 'checkOut')) {
+      return res.status(400).json({ message: 'Valid action type (checkIn or checkOut) is required' });
+    }
+    
+    // Find all attendance records
+    const attendanceRecords = await Attendance.find({ _id: { $in: recordIds } });
+    
+    if (attendanceRecords.length === 0) {
+      return res.status(404).json({ message: 'No attendance records found' });
+    }
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Update each record
+    for (const attendance of attendanceRecords) {
+      try {
+        // Check if the type exists on the record
+        if (!attendance[action.type] || !attendance[action.type].time) {
+          errorCount++;
+          continue;
+        }
+        
+        // Update verification status
+        attendance[action.type].verified = true;
+        attendance.verifiedBy = req.user.id;
+        
+        await attendance.save();
+        successCount++;
+      } catch (error) {
+        console.error(`Error verifying attendance ${attendance._id}:`, error);
+        errorCount++;
+      }
+    }
+    
+    res.json({
+      message: `Bulk verification completed: ${successCount} successful, ${errorCount} failed`,
+      successCount,
+      errorCount
+    });
+  } catch (error) {
+    console.error('Bulk verify attendance error:', error.message);
+    res.status(500).json({ message: 'Server error during bulk verification' });
+  }
+});
+
 // @route   PATCH api/attendance/:id/verify
 // @desc    Verify attendance check-in or check-out (admin only)
 // @access  Private/Admin
@@ -897,11 +954,26 @@ router.delete('/:id', adminAuth, async (req, res) => {
       return res.status(404).json({ message: 'Attendance record not found' });
     }
     
-    await attendance.remove();
+    // Store attendance info for response before deletion
+    const deletedAttendanceInfo = {
+      id: attendance._id,
+      userId: attendance.user,
+      date: attendance.date,
+      status: attendance.status
+    };
     
-    res.json({ message: 'Attendance record deleted successfully' });
+    // Delete the attendance record using findByIdAndDelete
+    await Attendance.findByIdAndDelete(req.params.id);
+    
+    res.json({ 
+      message: 'Attendance record deleted successfully',
+      deletedRecord: deletedAttendanceInfo
+    });
   } catch (error) {
     console.error('Delete attendance error:', error.message);
+    if (error.kind === 'ObjectId' || error.name === 'CastError') {
+      return res.status(404).json({ message: 'Attendance record not found - Invalid ID' });
+    }
     res.status(500).json({ message: 'Server error deleting attendance' });
   }
 });

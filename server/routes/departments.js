@@ -18,6 +18,32 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// @route   GET api/departments/export
+// @desc    Export departments data as CSV
+// @access  Private/Admin
+router.get('/export', adminAuth, async (req, res) => {
+  try {
+    const departments = await Department.find().populate('head', 'name email');
+    
+    // Convert to CSV format
+    const csvData = departments.map(dept => ({
+      'Department Name': dept.name,
+      'Department Code': dept.code || '',
+      'Description': dept.description || '',
+      'Head Name': dept.head?.name || '',
+      'Head Email': dept.head?.email || '',
+      'Status': dept.isActive ? 'Active' : 'Inactive',
+      'Created Date': dept.createdAt.toLocaleDateString(),
+      'Last Updated': dept.updatedAt.toLocaleDateString()
+    }));
+    
+    res.json(csvData);
+  } catch (error) {
+    console.error('Export departments error:', error.message);
+    res.status(500).json({ message: 'Server error exporting departments' });
+  }
+});
+
 // @route   POST api/departments
 // @desc    Create a department
 // @access  Private/Admin
@@ -232,32 +258,6 @@ router.get('/:id/stats', auth, async (req, res) => {
   } catch (error) {
     console.error('Get department stats error:', error.message);
     res.status(500).json({ message: 'Server error fetching department statistics' });
-  }
-});
-
-// @route   GET api/departments/export
-// @desc    Export departments data as CSV
-// @access  Private/Admin
-router.get('/export', adminAuth, async (req, res) => {
-  try {
-    const departments = await Department.find().populate('head', 'name email');
-    
-    // Convert to CSV format
-    const csvData = departments.map(dept => ({
-      'Department Name': dept.name,
-      'Department Code': dept.code || '',
-      'Description': dept.description || '',
-      'Head Name': dept.head?.name || '',
-      'Head Email': dept.head?.email || '',
-      'Status': dept.isActive ? 'Active' : 'Inactive',
-      'Created Date': dept.createdAt.toLocaleDateString(),
-      'Last Updated': dept.updatedAt.toLocaleDateString()
-    }));
-    
-    res.json(csvData);
-  } catch (error) {
-    console.error('Export departments error:', error.message);
-    res.status(500).json({ message: 'Server error exporting departments' });
   }
 });
 

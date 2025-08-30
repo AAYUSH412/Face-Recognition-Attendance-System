@@ -126,6 +126,51 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// @route   GET api/events/my-attendance
+// @desc    Get current user's event attendance history
+// @access  Private
+router.get('/my-attendance', auth, async (req, res) => {
+  try {
+    const { startDate, endDate, limit, page } = req.query;
+    
+    let dateFilter = { user: req.user.id };
+    
+    if (startDate && endDate) {
+      dateFilter.checkedInAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    // Pagination
+    const pageSize = parseInt(limit) || 50;
+    const currentPage = parseInt(page) || 1;
+    const skip = (currentPage - 1) * pageSize;
+    
+    const totalRecords = await EventAttendance.countDocuments(dateFilter);
+    const totalPages = Math.ceil(totalRecords / pageSize);
+    
+    const attendance = await EventAttendance.find(dateFilter)
+      .populate('event', 'name startDate endDate location')
+      .sort({ checkedInAt: -1 })
+      .skip(skip)
+      .limit(pageSize);
+    
+    res.json({
+      records: attendance,
+      pagination: {
+        total: totalRecords,
+        pages: totalPages,
+        page: currentPage,
+        pageSize
+      }
+    });
+  } catch (error) {
+    console.error('Get my attendance error:', error.message);
+    res.status(500).json({ message: 'Server error fetching attendance' });
+  }
+});
+
 // @route   GET api/events/:id
 // @desc    Get event by ID
 // @access  Private
@@ -256,14 +301,63 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this event' });
     }
     
+    // Store event info for response before deletion
+    const deletedEventInfo = {
+      id: event._id,
+      name: event.name,
+      organizer: event.organizer
+    };
+    
     // Delete event and all associated attendance records
     await EventAttendance.deleteMany({ event: req.params.id });
-    await event.remove();
+    await Event.findByIdAndDelete(req.params.id);
     
-    res.json({ message: 'Event deleted successfully' });
+    res.json({ 
+      message: 'Event deleted successfully',
+      deletedEvent: deletedEventInfo
+    });
   } catch (error) {
     console.error('Delete event error:', error.message);
+    if (error.kind === 'ObjectId' || error.name === 'CastError') {
+      return res.status(404).json({ message: 'Event not found - Invalid ID' });
+    }
     res.status(500).json({ message: 'Server error deleting event' });
+  }
+});
+
+// @route   POST api/events/:id/qr
+// @desc    Generate QR code for an event (alias for regenerate-qr)
+// @access  Private (Admin or Event organizer only)
+router.post('/:id/qr', auth, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    
+    // Check authorization - only admin or event organizer can generate QR code
+    if (req.user.role !== 'admin' && event.organizer.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to generate QR code for this event' });
+    }
+    
+    // Generate new QR code data
+    const qrCodeData = await generateQRCode(event._id);
+    event.qrCodeData = {
+      value: qrCodeData,
+      expiresAt: event.endDate,
+      isActive: true
+    };
+    
+    await event.save();
+    
+    res.json({ 
+      message: 'QR code generated successfully',
+      qrCodeData: event.qrCodeData
+    });
+  } catch (error) {
+    console.error('Generate QR code error:', error.message);
+    res.status(500).json({ message: 'Server error generating QR code' });
   }
 });
 

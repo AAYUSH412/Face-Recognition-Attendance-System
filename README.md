@@ -25,6 +25,28 @@
 
 ---
 
+## ⚡ Quick Commands
+
+```bash
+# 🚀 Start everything instantly
+./start-all.sh --install    # Install dependencies + start all services
+./start-all.sh               # Start all services
+./stop-all.sh               # Stop all services
+
+# 🐳 Docker commands
+./start-all.sh --docker     # Start with Docker
+npm run docker:dev          # Alternative Docker start
+
+# 📦 npm commands
+npm run dev                 # Start all services
+npm run install-all         # Install all dependencies
+npm run build              # Build all applications
+```
+
+**🌐 Service URLs**: Client: http://localhost:5173 | Admin: http://localhost:5174 | API: http://localhost:4000
+
+---
+
 ## 🌟 Overview
 
 The **Face Recognition Attendance System** revolutionizes traditional attendance tracking by implementing contactless, AI-powered facial recognition technology. This comprehensive solution eliminates manual processes, reduces errors, and provides real-time analytics for educational institutions and organizations.
@@ -95,6 +117,7 @@ The **Face Recognition Attendance System** revolutionizes traditional attendance
 <div align="center">
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#4f46e5', 'lineColor': '#6b7280', 'sectionBkgColor': 'transparent', 'altSectionBkgColor': 'transparent', 'gridColor': '#374151', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Frontend Applications"
         A[👤 User Client<br/>React + Vite]
@@ -117,12 +140,13 @@ graph TB
     C --> E
     C --> F
     
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#e8f5e8
-    style D fill:#fff3e0
-    style E fill:#fce4ec
-    style F fill:#f1f8e9
+    classDef frontend fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#ffffff
+    classDef backend fill:#10b981,stroke:#059669,stroke-width:2px,color:#ffffff
+    classDef data fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#ffffff
+    
+    class A,B frontend
+    class C,D backend
+    class E,F data
 ```
 
 </div>
@@ -131,32 +155,84 @@ graph TB
 
 ```
 Face-Recognition-Attendance-System/
-├── 📱 client/              # User-facing React application
+├── � package.json                 # Root workspace configuration
+├── 🚀 start-all.sh                 # Main startup script for all services
+├── 🛑 stop-all.sh                  # Script to stop all services
+├── 🐳 docker-compose.dev.yml       # Development environment
+├── 🐳 docker-compose.yml           # Production environment
+│
+├── �📱 client/              # User-facing React application
 │   ├── 🎨 src/
 │   │   ├── 🔐 Auth/        # Authentication components
 │   │   ├── 🧩 components/  # Reusable UI components
 │   │   ├── 🌐 context/     # React context providers
+│   │   ├── 🪝 hooks/       # Custom React hooks
+│   │   ├── 📄 pages/       # Page components
 │   │   └── 🛠️ utils/       # Utility functions
 │   └── 📦 package.json
 │
 ├── 🛡️ admin/              # Admin dashboard React application
 │   ├── 🎨 src/
 │   │   ├── 🧩 components/  # Admin UI components
+│   │   │   ├── attendance/ # Attendance management
+│   │   │   ├── departments/ # Department management
+│   │   │   ├── events/     # Event management
+│   │   │   ├── users/      # User management
+│   │   │   └── ui/         # Shared UI components
 │   │   ├── 📄 pages/       # Admin pages
 │   │   ├── 🌐 context/     # Admin context providers
 │   │   └── 🛠️ utils/       # Admin utilities
 │   └── 📦 package.json
 │
 ├── 🚀 server/             # Node.js Express backend
-│   ├── 🎮 controllers/    # Business logic
-│   ├── 🛡️ middleware/     # Custom middleware
+│   ├── 🛡️ middleware/     # Express middleware
 │   ├── 📊 models/         # MongoDB schemas
 │   ├── 🛣️ routes/         # API endpoints
-│   └── 🛠️ utils/          # Server utilities
+│   ├── 🛠️ utils/          # Server utilities
+│   ├── 📄 seedData.js     # Database seeding
+│   └── � package.json
 │
-└── 📖 docs/               # Documentation
-    └── 📋 PRD.md          # Product Requirements Document
+└── 🐳 docker/             # Docker configuration
+    ├── nginx.conf         # Reverse proxy config
+    ├── startup.sh         # Container startup
+    └── mongo-init.js      # Database initialization
 ```
+
+**📋 Complete structure details: [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)**
+
+## 🧪 Testing & Demo
+
+### 🔐 Sample Credentials
+
+After starting the server, seed the database with test data:
+
+```bash
+# Seed database with sample data
+cd server && npm run seed
+```
+
+**Sample Data Created:**
+- 8 Departments (CS, IT, ECE, ME, CE, EE, MATH, PHY)
+- 118 Users (3 admins, 15 faculty, 100 students)
+- 25 Events with attendance tracking
+- 2,627+ Attendance records
+
+### 📋 API Testing
+
+Import the Postman collection for comprehensive API testing:
+```
+server/Face_Recognition_Attendance_API.postman_collection.json
+```
+
+### 🎯 Test Features
+
+1. **👤 User Registration**: Register with face recognition
+2. **🔐 Login Methods**: Email/password and face recognition
+3. **📸 Attendance**: Mark attendance with face detection
+4. **👨‍💼 Admin Panel**: Manage users, events, and view reports
+5. **📊 Analytics**: View attendance statistics and reports
+
+**📖 Detailed credentials: [server/LOGIN_CREDENTIALS.md](server/LOGIN_CREDENTIALS.md)**
 
 ## 🛠️ Tech Stack
 
@@ -212,19 +288,40 @@ Face-Recognition-Attendance-System/
 
 ## 🚀 Quick Start
 
-### 📋 Prerequisites
+### 🎯 Instant Startup (Recommended)
+
+Start all services with a single command:
+
+```bash
+# Clone the repository
+git clone https://github.com/AAYUSH412/Face-Recognition-Attendance-System.git
+cd Face-Recognition-Attendance-System
+
+# � One-command startup (installs dependencies + starts all services)
+./start-all.sh --install
+
+# Or if dependencies are already installed
+./start-all.sh
+
+# 🛑 Stop all services
+./stop-all.sh
+```
+
+**Service URLs:**
+- 🌐 **Client Application**: http://localhost:5173
+- 👨‍💼 **Admin Panel**: http://localhost:5174
+- 🖥️ **API Server**: http://localhost:4000
+
+### �📋 Prerequisites
 
 Ensure you have the following installed on your system:
 
 ```bash
-# Check if Node.js is installed (v14 or higher required)
+# Check if Node.js is installed (v18 or higher required)
 node --version
 
 # Check if npm is installed
 npm --version
-
-# Check if MongoDB is running
-mongod --version
 ```
 
 <details>
@@ -235,7 +332,7 @@ mongod --version
 # Install Node.js using Homebrew
 brew install node
 
-# Install MongoDB
+# Install MongoDB (optional for local development)
 brew tap mongodb/brew
 brew install mongodb-community@7.0
 brew services start mongodb/brew/mongodb-community
@@ -247,7 +344,7 @@ brew services start mongodb/brew/mongodb-community
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Install MongoDB
+# Install MongoDB (optional for local development)
 wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
 echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 sudo apt-get update
@@ -257,22 +354,53 @@ sudo systemctl start mongod
 
 #### Windows
 - Download and install [Node.js](https://nodejs.org/)
-- Download and install [MongoDB Community Server](https://www.mongodb.com/try/download/community)
+- Download and install [MongoDB Community Server](https://www.mongodb.com/try/download/community) (optional)
 
 </details>
 
-### ⚡ One-Click Setup
+### 🎮 Alternative Startup Methods
+
+<details>
+<summary><strong>📦 Using npm Scripts</strong></summary>
 
 ```bash
-# Clone the repository
-git clone https://github.com/AAYUSH412/Face-Recognition-Attendance-System.git
-cd Face-Recognition-Attendance-System
+# Start all services
+npm run dev
 
-# Run the setup script (installs all dependencies)
-chmod +x setup.sh && ./setup.sh
+# Install all dependencies
+npm run install-all
 
-# Or manually install each component:
+# Build all applications
+npm run build
+
+# Individual service commands
+npm run server:dev      # Start only server
+npm run client:dev      # Start only client  
+npm run admin:dev       # Start only admin
 ```
+
+</details>
+
+<details>
+<summary><strong>🔧 Manual Setup</strong></summary>
+
+```bash
+# Install server dependencies
+cd server && npm install && cd ..
+
+# Install client dependencies
+cd client && npm install && cd ..
+
+# Install admin dependencies
+cd admin && npm install && cd ..
+
+# Start services individually
+cd server && npm run dev &    # Start server
+cd client && npm run dev &    # Start client
+cd admin && npm run dev &     # Start admin
+```
+
+</details>
 
 ## 🐳 Docker Setup
 
@@ -285,30 +413,30 @@ The easiest way to run the Face Recognition Attendance System is using Docker. T
 git clone https://github.com/AAYUSH412/Face-Recognition-Attendance-System.git
 cd Face-Recognition-Attendance-System
 
-# Run the automated deployment script
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh dev    # For development
-# OR
-./scripts/deploy.sh prod   # For production
+# 🐳 Start with Docker (one command)
+./start-all.sh --docker
+
+# Or use npm script
+npm run docker:dev
 ```
 
-### 🛠️ Manual Docker Setup
+### 🛠️ Manual Docker Commands
 
 <details>
 <summary><strong>🔧 Development Environment</strong></summary>
 
 ```bash
-# Copy environment configuration
-cp .env.example .env
-
-# Edit environment variables (important!)
-nano .env
-
-# Start development environment
+# Start development environment with all services
 docker-compose -f docker-compose.dev.yml up --build -d
 
 # Check status
 docker-compose -f docker-compose.dev.yml ps
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.dev.yml down
 ```
 
 **Development Services:**
@@ -318,6 +446,9 @@ docker-compose -f docker-compose.dev.yml ps
 - 🗄️ **MongoDB**: localhost:27017
 - 📊 **Mongo Express**: http://localhost:8081 (admin:admin123)
 - 🔄 **Redis**: localhost:6379
+- 📈 **Redis Commander**: http://localhost:8082 (admin:admin123)
+
+</details>
 - 📈 **Redis Commander**: http://localhost:8082 (admin:admin123)
 
 </details>
@@ -963,24 +1094,7 @@ docker-compose logs -f
 
 # View system metrics
 docker stats
-```
-    container_name: face-recognition-client
-    restart: always
-    ports:
-      - "3000:80"
 
-  admin:
-    build: ./admin
-    container_name: face-recognition-admin
-    restart: always
-    ports:
-      - "3001:80"
-
-volumes:
-  mongodb_data:
-```
-
-```bash
 # Deploy with Docker Compose
 docker-compose up -d --build
 
@@ -1382,33 +1496,33 @@ The **Face Recognition Attendance System** represents a culmination of modern we
 
 ```mermaid
 mindmap
-  root((Face Recognition
+  root((🎯 Face Recognition
     Attendance System))
-    Frontend
-      React 19
-      TensorFlow.js
-      TailwindCSS
-      PWA Support
-    Backend
-      Node.js & Express
-      MongoDB & Mongoose
-      JWT Authentication
-      RESTful APIs
-    AI/ML
-      BlazeFace Detection
-      Face Recognition
-      Real-time Processing
-      Browser-based ML
-    DevOps
-      Docker Containerization
-      Multi-environment Setup
-      Health Monitoring
-      Automated Deployment
-    Security
-      JWT Tokens
-      Rate Limiting
-      Input Validation
-      CORS Protection
+    🎨 Frontend
+      ⚛️ React 19
+      🤖 TensorFlow.js
+      🎨 TailwindCSS
+      📱 PWA Support
+    🚀 Backend
+      🟢 Node.js & Express
+      🍃 MongoDB & Mongoose
+      🔐 JWT Authentication
+      🔗 RESTful APIs
+    🧠 AI/ML
+      👁️ BlazeFace Detection
+      🔍 Face Recognition
+      ⚡ Real-time Processing
+      🌐 Browser-based ML
+    🐳 DevOps
+      📦 Docker Containerization
+      🌍 Multi-environment Setup
+      📊 Health Monitoring
+      🚀 Automated Deployment
+    🛡️ Security
+      🎫 JWT Tokens
+      ⏱️ Rate Limiting
+      ✅ Input Validation
+      🔒 CORS Protection
 ```
 
 ### 🎓 **Educational Value**

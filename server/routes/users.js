@@ -36,6 +36,83 @@ router.patch('/bulk-status', adminAuth, async (req, res) => {
   }
 });
 
+// @route   DELETE api/users/bulk
+// @desc    Bulk delete users (Admin only)
+// @access  Private/Admin
+router.delete('/bulk', adminAuth, async (req, res) => {
+  try {
+    const { userIds } = req.body;
+    
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ message: 'User IDs array is required' });
+    }
+    
+    // Check if any of the users to be deleted are admins
+    const adminUsers = await User.find({ 
+      _id: { $in: userIds }, 
+      role: 'admin' 
+    });
+    
+    if (adminUsers.length > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete admin users', 
+        adminUsers: adminUsers.map(user => ({ id: user._id, name: user.name, email: user.email }))
+      });
+    }
+    
+    // Delete the users
+    const result = await User.deleteMany({ _id: { $in: userIds } });
+    
+    res.json({
+      message: `Successfully deleted ${result.deletedCount} users`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Bulk delete error:', error.message);
+    res.status(500).json({ message: 'Server error deleting users' });
+  }
+});
+
+// @route   GET api/users/export
+// @desc    Export users data as CSV (Admin only)
+// @access  Private/Admin
+router.get('/export', adminAuth, async (req, res) => {
+  try {
+    const { role, department, isActive } = req.query;
+    
+    let filter = {};
+    
+    // Apply filters
+    if (role) filter.role = role;
+    if (department) filter.department = department;
+    if (isActive !== undefined) filter.isActive = isActive === 'true';
+    
+    const users = await User.find(filter)
+      .populate('department', 'name code')
+      .select('-password')
+      .sort({ name: 1 });
+    
+    // Format data for CSV
+    const csvData = users.map(user => ({
+      'Name': user.name,
+      'Email': user.email,
+      'Role': user.role,
+      'Registration ID': user.registrationId || 'N/A',
+      'Department': user.department?.name || 'N/A',
+      'Department Code': user.department?.code || 'N/A',
+      'Status': user.isActive ? 'Active' : 'Inactive',
+      'Face Data': user.faceData && user.faceData.length > 0 ? 'Yes' : 'No',
+      'Created Date': new Date(user.createdAt).toLocaleDateString(),
+      'Last Updated': new Date(user.updatedAt).toLocaleDateString()
+    }));
+    
+    res.json(csvData);
+  } catch (error) {
+    console.error('Export users error:', error.message);
+    res.status(500).json({ message: 'Server error exporting users' });
+  }
+});
+
 // @route   GET api/users/stats
 // @desc    Get user statistics (Admin only)
 // @access  Private/Admin
@@ -82,12 +159,68 @@ router.get('/stats', adminAuth, async (req, res) => {
 });
 
 // @route   GET api/users
-// @desc    Get all users
+// @desc    Get all users with filtering and pagination
 // @access  Private/Admin
 router.get('/', adminAuth, async (req, res) => {
   try {
-    const users = await User.find().select('-password').populate('department', 'name');
-    res.json(users);
+    const { 
+      page = 1, 
+      limit = 20, 
+      role, 
+      department, 
+      isActive, 
+      search,
+      sortBy = 'name',
+      sortOrder = 'asc'
+    } = req.query;
+    
+    // Build filter
+    let filter = {};
+    if (role) filter.role = role;
+    if (department) filter.department = department;
+    if (isActive !== undefined) filter.isActive = isActive === 'true';
+    
+    // Add search functionality
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { registrationId: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Pagination
+    const pageSize = parseInt(limit);
+    const currentPage = parseInt(page);
+    const skip = (currentPage - 1) * pageSize;
+    
+    // Sorting
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    
+    // Get total count for pagination
+    const totalUsers = await User.countDocuments(filter);
+    const totalPages = Math.ceil(totalUsers / pageSize);
+    
+    // Get users
+    const users = await User.find(filter)
+      .select('-password')
+      .populate('department', 'name code')
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(pageSize);
+    
+    res.json({
+      users,
+      pagination: {
+        total: totalUsers,
+        pages: totalPages,
+        page: currentPage,
+        pageSize,
+        hasNext: currentPage < totalPages,
+        hasPrev: currentPage > 1
+      }
+    });
   } catch (error) {
     console.error('Get users error:', error.message);
     res.status(500).json({ message: 'Server error fetching users' });
@@ -99,15 +232,19 @@ router.get('/', adminAuth, async (req, res) => {
 // @access  Private/Admin
 router.get('/:id', adminAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password').populate('department', 'name');
+    const user = await User.findById(req.params.id)
+      .select('-password')
+      .populate('department', 'name code description');
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    
     res.json(user);
   } catch (error) {
     console.error('Get user error:', error.message);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'User not found' });
+    if (error.kind === 'ObjectId' || error.name === 'CastError') {
+      return res.status(404).json({ message: 'User not found - Invalid user ID' });
     }
     res.status(500).json({ message: 'Server error fetching user' });
   }
@@ -371,6 +508,20 @@ router.delete('/:id', adminAuth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    // Prevent deletion of admin users (including self-deletion)
+    if (user.role === 'admin') {
+      return res.status(400).json({ 
+        message: 'Cannot delete admin users. Admin users can only be deactivated.' 
+      });
+    }
+    
+    // Prevent self-deletion
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ 
+        message: 'Cannot delete your own account. Please contact another admin.' 
+      });
+    }
+    
     // Delete all face images from ImageKit before deleting user
     if (user.faceData && user.faceData.length > 0) {
       try {
@@ -388,7 +539,15 @@ router.delete('/:id', adminAuth, async (req, res) => {
     // Delete the user
     await User.findByIdAndDelete(req.params.id);
     
-    res.json({ message: 'User deleted successfully' });
+    res.json({ 
+      message: 'User deleted successfully',
+      deletedUser: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
     console.error('Delete user error:', error.message);
     if (error.kind === 'ObjectId') {
@@ -437,6 +596,55 @@ router.put('/password', auth, async (req, res) => {
   } catch (error) {
     console.error('Password change error:', error.message);
     res.status(500).json({ message: 'Server error changing password' });
+  }
+});
+
+// @route   PUT api/users/profile
+// @desc    Update user's own profile
+// @access  Private
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { name, profileImageData } = req.body;
+    const userId = req.user.id;
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update profile fields
+    if (name) user.name = name;
+
+    // Handle profile image upload if present
+    if (profileImageData) {
+      try {
+        // Upload to ImageKit
+        const uploadResponse = await imagekit.upload({
+          file: profileImageData,
+          fileName: `profile_${userId}_${Date.now()}`,
+          folder: '/profiles/'
+        });
+
+        user.profileImage = uploadResponse.url;
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError);
+        return res.status(400).json({ message: 'Failed to upload profile image' });
+      }
+    }
+
+    await user.save();
+
+    // Return updated user (without password)
+    const updatedUser = await User.findById(userId).select('-password');
+    
+    res.json({
+      message: 'Profile updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Profile update error:', error.message);
+    res.status(500).json({ message: 'Server error updating profile' });
   }
 });
 
