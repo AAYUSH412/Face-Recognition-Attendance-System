@@ -240,7 +240,7 @@ export const SlideUpPanel = ({ children, isOpen, ...props }) => {
       initial={{ y: "100%" }}
       animate={{ y: isOpen ? 0 : "100%" }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-gray-800 rounded-t-lg shadow-lg"
+      className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-lg shadow-lg"
       {...props}
     >
       {children}

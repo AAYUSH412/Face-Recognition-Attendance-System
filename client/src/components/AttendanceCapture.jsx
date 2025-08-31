@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
-// import Webcam from 'react-webcam';
-// import * as tf from '@tensorflow/tfjs';
-// import '@tensorflow/tfjs-backend-webgl';
-// import '@tensorflow/tfjs-backend-cpu';
-// import * as blazeface from '@tensorflow-models/blazeface';
+import React, { useState, useEffect,useRef,useCallback } from 'react';
+import Webcam from 'react-webcam';
+import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-cpu';
+import * as blazeface from '@tensorflow-models/blazeface';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api.js';
 import toast from 'react-hot-toast';
+import { CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 const AttendanceCapture = () => {
   const navigate = useNavigate();
   const [currentAttendance, setCurrentAttendance] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
-  // Face recognition related state - commented out for now
-  // const [isFaceDetected, setIsFaceDetected] = useState(false);
-  // const [faceDetectionConfidence, setFaceDetectionConfidence] = useState(0);
-  // const [modelsLoaded, setModelsLoaded] = useState(false);
-  // const [blazeFaceModel, setBlazeFaceModel] = useState(null);
+  const [isFaceDetected, setIsFaceDetected] = useState(false);
+  const [faceDetectionConfidence, setFaceDetectionConfidence] = useState(0);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [blazeFaceModel, setBlazeFaceModel] = useState(null);
   const [html5QrCode, setHtml5QrCode] = useState(null);
   const [activeMode, setActiveMode] = useState('selection'); // 'selection', 'qr', 'manual' (removed 'face')
   const [captureType, setCaptureType] = useState("check-in");
@@ -25,9 +25,72 @@ const AttendanceCapture = () => {
   const [qrError, setQrError] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // const webcamRef = useRef(null);
-  // const canvasRef = useRef(null);
-  // const MIN_CONFIDENCE_THRESHOLD = 0.5;
+  const webcamRef = useRef(null);
+  const canvasRef = useRef(null);
+  const MIN_CONFIDENCE_THRESHOLD = 0.5;
+
+  // Custom toast components with icons
+  const showSuccessToast = (message, isCheckout = false) => {
+    toast.success(
+      () => (
+        <div className="flex items-center space-x-3">
+          <div className={`flex-shrink-0 ${isCheckout ? 'text-red-500' : 'text-green-500'}`}>
+            {isCheckout ? (
+              <XCircleIcon className="w-6 h-6" />
+            ) : (
+              <CheckCircleIcon className="w-6 h-6" />
+            )}
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">{message}</p>
+            <p className="text-sm text-gray-600 mt-1">
+              {isCheckout ? '🏁 Your work day has ended successfully' : '✨ Your work day has started successfully'}
+            </p>
+          </div>
+        </div>
+      ),
+      {
+        duration: 5000,
+        style: {
+          background: isCheckout ? '#FEF2F2' : '#F0FDF4',
+          border: `2px solid ${isCheckout ? '#F87171' : '#34D399'}`,
+          padding: '16px',
+          borderRadius: '12px',
+          maxWidth: '450px',
+          fontSize: '14px',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        },
+      }
+    );
+  };
+
+  const showErrorToast = (message) => {
+    toast.error(
+      () => (
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0 text-red-500">
+            <XCircleIcon className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">Attendance Failed</p>
+            <p className="text-sm text-gray-600 mt-1">{message}</p>
+          </div>
+        </div>
+      ),
+      {
+        duration: 6000,
+        style: {
+          background: '#FEF2F2',
+          border: '2px solid #F87171',
+          padding: '16px',
+          borderRadius: '12px',
+          maxWidth: '450px',
+          fontSize: '14px',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        },
+      }
+    );
+  };
 
   // Update time every second
   useEffect(() => {
@@ -38,7 +101,6 @@ const AttendanceCapture = () => {
   }, []);
 
   // Face recognition related code - commented out for now
-  /*
   // Load TensorFlow models
   useEffect(() => {
     const loadModels = async () => {
@@ -112,7 +174,7 @@ const AttendanceCapture = () => {
   // Handle face recognition attendance
   const captureAttendance = async () => {
     if (!webcamRef.current || !isFaceDetected || faceDetectionConfidence < MIN_CONFIDENCE_THRESHOLD) {
-      toast.error('Please ensure your face is clearly visible and detected');
+      showErrorToast('Please ensure your face is clearly visible and detected');
       return;
     }
 
@@ -130,19 +192,19 @@ const AttendanceCapture = () => {
       if (response.data.success) {
         setCurrentAttendance(response.data.attendance);
         setShowSuccessMessage(true);
-        toast.success(`Face ${captureType === 'check-in' ? 'Check-in' : 'Check-out'} successful!`);
+        const isCheckout = captureType === 'check-out';
+        showSuccessToast(`Face ${captureType === 'check-in' ? 'Check-in' : 'Check-out'} successful!`, isCheckout);
         // Don't auto-redirect - stay in face mode for multiple captures
       } else {
-        toast.error('Attendance marking failed: ' + response.data.message);
+        showErrorToast(response.data.message || 'Face attendance marking failed');
       }
     } catch (error) {
       console.error('Error marking attendance:', error);
-      toast.error('Error marking attendance: ' + (error.response?.data?.message || error.message));
+      showErrorToast(error.response?.data?.message || error.message || 'Error marking attendance');
     } finally {
       setIsCapturing(false);
     }
   };
-  */
 
   // Handle manual attendance
   const markManualAttendance = async () => {
@@ -157,14 +219,15 @@ const AttendanceCapture = () => {
       if (response.data.success) {
         setCurrentAttendance(response.data.attendance);
         setShowSuccessMessage(true);
-        toast.success(`Manual ${captureType === 'check-in' ? 'Check-in' : 'Check-out'} successful!`);
+        const isCheckout = captureType === 'check-out';
+        showSuccessToast(`Manual ${captureType === 'check-in' ? 'Check-in' : 'Check-out'} successful!`, isCheckout);
         // Don't auto-redirect - stay in manual mode
       } else {
-        toast.error('Manual attendance marking failed: ' + response.data.message);
+        showErrorToast(response.data.message || 'Manual attendance marking failed');
       }
     } catch (error) {
       console.error('Error marking manual attendance:', error);
-      toast.error('Error marking manual attendance: ' + (error.response?.data?.message || error.message));
+      showErrorToast(error.response?.data?.message || error.message || 'Error marking manual attendance');
     } finally {
       setIsCapturing(false);
     }
@@ -218,14 +281,15 @@ const AttendanceCapture = () => {
               if (response.data.success) {
                 setCurrentAttendance(response.data.attendance);
                 setShowSuccessMessage(true);
-                toast.success(`QR ${captureType === 'check-in' ? 'Check-in' : 'Check-out'} successful!`);
+                const isCheckout = captureType === 'check-out';
+                showSuccessToast(`QR ${captureType === 'check-in' ? 'Check-in' : 'Check-out'} successful!`, isCheckout);
                 // Don't auto-redirect - stay in QR mode for multiple scans
               } else {
-                toast.error('QR attendance marking failed: ' + response.data.message);
+                showErrorToast(response.data.message || 'QR attendance marking failed');
               }
             } catch (error) {
               console.error('Error processing QR code:', error);
-              toast.error('Error processing QR code: ' + (error.response?.data?.message || error.message));
+              showErrorToast(error.response?.data?.message || error.message || 'Error processing QR code');
             }
           },
           (errorMessage) => {
@@ -245,7 +309,7 @@ const AttendanceCapture = () => {
     } catch (error) {
       console.error('Error starting QR scanner:', error);
       setQrError('Failed to start QR scanner: ' + error.message);
-      toast.error('Failed to start QR scanner');
+      showErrorToast('Failed to start QR scanner: ' + error.message);
     }
   };
 
@@ -294,7 +358,7 @@ const AttendanceCapture = () => {
             Mark Attendance
           </h1>
           <p className="text-lg text-slate-600 bg-white px-6 py-2 rounded-full shadow-sm border">
-            📅 {currentTime.toLocaleDateString()} | 🕒 {currentTime.toLocaleTimeString()}
+            {currentTime.toLocaleDateString()} | 🕒 {currentTime.toLocaleTimeString()}
           </p>
         </div>
 
@@ -356,7 +420,7 @@ const AttendanceCapture = () => {
           </div>
             
           {/* Quick Navigation */}
-          <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-100">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-slate-100">
             <button
               onClick={() => navigate('/history')}
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
@@ -377,49 +441,7 @@ const AttendanceCapture = () => {
             </button>
           </div>
         </div>
-
-        {/* Success Message */}
-        {showSuccessMessage && currentAttendance && (
-          <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-8 shadow-lg">
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-green-800 mb-1">
-                    Attendance Marked Successfully!
-                  </h3>
-                  <div className="text-green-700 space-y-1">
-                    <p className="flex items-center gap-2">
-                      <span className="font-medium">Type:</span> 
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        currentAttendance.type === 'check-in' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-red-100 text-red-700'
-                      }`}>
-                        {currentAttendance.type}
-                      </span>
-                    </p>
-                    <p><span className="font-medium">Time:</span> {new Date(currentAttendance.timestamp).toLocaleString()}</p>
-                    <p><span className="font-medium">Method:</span> {currentAttendance.method}</p>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowSuccessMessage(false)}
-                className="text-green-600 hover:text-green-800 p-1"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
+        
         {/* Method Selection */}
         {activeMode === 'selection' && (
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-8">
@@ -430,9 +452,8 @@ const AttendanceCapture = () => {
               <h2 className="text-xl font-semibold text-slate-900">Choose Attendance Method</h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Face Recognition - Commented out */}
-              {/* 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Face Recognition - Commented out */} 
               <button
                 onClick={() => setActiveMode('face')}
                 className="group p-6 border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-lg transition-all duration-200"
@@ -450,7 +471,6 @@ const AttendanceCapture = () => {
                   </div>
                 </div>
               </button>
-              */}
               
               <button
                 onClick={startQRScanning}
@@ -490,9 +510,6 @@ const AttendanceCapture = () => {
             </div>
           </div>
         )}
-
-        {/* Face Recognition Mode - Commented out for now */}
-        {/*
         {activeMode === 'face' && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
@@ -546,7 +563,6 @@ const AttendanceCapture = () => {
             </div>
           </div>
         )}
-        */}
 
         {/* QR Code Mode */}
         {activeMode === 'qr' && (
@@ -662,17 +678,44 @@ const AttendanceCapture = () => {
 
         {/* Final Attendance Status - Enhanced */}
         {currentAttendance && !showSuccessMessage && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8 shadow-lg">
+          <div className={`border-2 rounded-2xl p-8 shadow-lg ${
+            currentAttendance.type === 'check-in'
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+              : 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200'
+          }`}>
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                currentAttendance.type === 'check-in'
+                  ? 'bg-green-500'
+                  : 'bg-red-500'
+              }`}>
+                {currentAttendance.type === 'check-in' ? (
+                  <CheckCircleIcon className="w-8 h-8 text-white" />
+                ) : (
+                  <XCircleIcon className="w-8 h-8 text-white" />
+                )}
               </div>
               
-              <h3 className="text-2xl font-bold text-green-800 mb-2">
-                Attendance Marked Successfully! 🎉
+              <h3 className={`text-2xl font-bold mb-2 ${
+                currentAttendance.type === 'check-in'
+                  ? 'text-green-800'
+                  : 'text-red-800'
+              }`}>
+                {currentAttendance.type === 'check-in' 
+                  ? 'Work Day Started! 🎉' 
+                  : 'Work Day Completed! 🏁'
+                }
               </h3>
+              <p className={`mb-4 ${
+                currentAttendance.type === 'check-in'
+                  ? 'text-green-600'
+                  : 'text-red-600'
+              }`}>
+                {currentAttendance.type === 'check-in' 
+                  ? 'Your attendance has been recorded. Have a productive day!' 
+                  : 'Thank you for your hard work today. See you tomorrow!'
+                }
+              </p>
               
               <div className="bg-white rounded-xl p-6 mb-6 shadow-md border border-green-100">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">

@@ -108,6 +108,7 @@ router.post('/mark-manual', auth, async (req, res) => {
     await attendance.populate('user', 'name email studentId employeeId');
     
     res.json({
+      success: true,
       message: `${isCheckIn ? 'Check-in' : 'Check-out'} successful`,
       attendance,
       checkInTime: attendance.checkIn.time,
@@ -294,6 +295,7 @@ router.post('/mark', auth, async (req, res) => {
     await attendance.save();
     
     res.json({
+      success: true,
       message: `${isCheckIn ? 'Check-in' : 'Check-out'} recorded successfully`,
       attendance
     });

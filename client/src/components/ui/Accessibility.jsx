@@ -291,14 +291,14 @@ export const AccessibilityPanel = ({ isOpen, onClose }) => {
       >
         <FocusTrap isActive={isOpen}>
           <div
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-xl"
+            className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Accessibility Settings</h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md
+                className="p-2 hover:bg-gray-100 rounded-md
                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 aria-label="Close accessibility panel"
               >

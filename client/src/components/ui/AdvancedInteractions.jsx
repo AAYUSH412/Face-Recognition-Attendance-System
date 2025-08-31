@@ -67,16 +67,16 @@ export const AdvancedModal = ({
               }
             }}
             className={cn(
-              "relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full mx-4",
+              "relative bg-white rounded-lg shadow-xl w-full mx-4",
               sizeClasses[size]
             )}
           >
             {title && (
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                  className="p-2 hover:bg-gray-100 rounded-md"
                   aria-label="Close modal"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -393,7 +393,7 @@ export const FloatingActionMenu = ({
               initial="hidden"
               animate="visible"
               exit="hidden"
-              className="absolute bg-white dark:bg-gray-700 p-3 rounded-full shadow-lg 
+              className="absolute bg-white p-3 rounded-full shadow-lg 
                          hover:scale-110 transition-transform z-10"
               style={{
                 left: `calc(50% + ${position.x}px)`,

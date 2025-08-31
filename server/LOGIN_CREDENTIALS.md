@@ -2,24 +2,51 @@
 
 ## Generated from Database Seeding
 
-### Admin Users
-- **Email:** akash.kumar1@student.edu
-- **Password:** password123
+### 👑 Admin Users
+- **Email:** admin@college.edu
+- **Password:** admin123
 - **Role:** admin
+- **Registration ID:** ADMIN123
+
+### 👨‍🏫 Faculty Users
+- **Email:** facultyfacerecognition@gmail.com
+- **Password:** facultyface123
+- **Role:** faculty
+- **Registration ID:** FAC001
+
+### 👨‍🎓 Student Users
+- **Email:** facerecognition@gmail.com
+- **Password:** facestudent123
+- **Role:** student
+- **Registration ID:** STU0001
+
+### Other Generated Users
+- **Email:** akash.kumar1@student.edu (and other generated emails)
+- **Password:** password123
+- **Role:** admin/faculty/student
 
 ### Testing Instructions
-1. Use any of the admin emails above to login to the admin panel
-2. Use any faculty or student email (pattern: firstname.lastname[number]@domain.edu)
-3. All users have the same password: `password123`
+1. Use the hardcoded admin email (admin@college.edu) to login to the admin panel
+2. Use the hardcoded faculty email (facultyfacerecognition@gmail.com) for faculty testing
+3. Use the hardcoded student email (facerecognition@gmail.com) for student testing
+4. Use any other generated email (pattern: firstname.lastname[number]@domain.edu) with password123
 
 ### Sample API Test (using curl)
 ```bash
-# Login to get token
+# Login with hardcoded admin credentials
 curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "akash.kumar1@student.edu",
-    "password": "password123"
+    "email": "admin@college.edu",
+    "password": "admin123"
+  }'
+
+# Login with hardcoded student credentials
+curl -X POST http://localhost:4000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "facerecognition@gmail.com",
+    "password": "facestudent123"
   }'
 
 # Use the returned token to access protected endpoints

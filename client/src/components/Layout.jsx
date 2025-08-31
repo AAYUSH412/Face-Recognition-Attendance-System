@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect } from 'react'
+import { Fragment, useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, Menu, Transition } from '@headlessui/react'
 import {
@@ -13,7 +13,13 @@ import {
   ArrowRightOnRectangleIcon,
   CalendarIcon,
   ChevronDownIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ShieldCheckIcon,
+  AcademicCapIcon,
+  BuildingOfficeIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { 
   Home,
@@ -26,55 +32,103 @@ import {
   Settings,
   LogOut,
   Menu as MenuIcon,
-  X
+  X,
+  Shield,
+  GraduationCap,
+  Building,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Users,
+  BarChart3,
+  Plus,
+  Zap
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { Button, EnhancedAvatar, ThemeToggle, SkipLink, AccessibilityButton, PerformanceMonitor } from './ui'
+import { Button, EnhancedAvatar, SkipLink, PerformanceMonitor, Badge } from './ui'
 import { cn } from '../lib/utils'
 
-// Updated navigation with new design
-const navigation = [
-  { 
-    name: 'Dashboard', 
-    href: '/', 
-    icon: HomeIcon, 
-    lucideIcon: Home,
-    description: 'Overview of your attendance',
-    color: 'text-primary-600'
-  },
-  { 
-    name: 'Mark Attendance', 
-    href: '/attendance', 
-    icon: ClipboardDocumentCheckIcon, 
-    lucideIcon: ClipboardCheck,
-    description: 'Face, Manual, or QR attendance',
-    color: 'text-secondary-600'
-  },
-  { 
-    name: 'Attendance History', 
-    href: '/history', 
-    icon: ClockIcon, 
-    lucideIcon: Clock,
-    description: 'View past attendance records',
-    color: 'text-accent-600'
-  },
-  { 
-    name: 'Events', 
-    href: '/events', 
-    icon: CalendarIcon, 
-    lucideIcon: Calendar,
-    description: 'View and join events',
-    color: 'text-purple-600'
-  },
-  { 
-    name: 'Profile', 
-    href: '/profile', 
-    icon: UserIcon, 
-    lucideIcon: User,
-    description: 'Manage your account',
-    color: 'text-emerald-600'
-  },
-]
+// Dynamic navigation based on user role
+const getNavigationItems = (userRole) => {
+  const baseNavigation = [
+    { 
+      name: 'Dashboard', 
+      href: '/', 
+      icon: HomeIcon, 
+      lucideIcon: Home,
+      description: 'Overview of your attendance',
+      color: 'text-primary-600',
+      roles: ['admin', 'faculty', 'student']
+    },
+    { 
+      name: 'Mark Attendance', 
+      href: '/attendance', 
+      icon: ClipboardDocumentCheckIcon, 
+      lucideIcon: ClipboardCheck,
+      description: 'Face, Manual, or QR attendance',
+      color: 'text-secondary-600',
+      roles: ['faculty', 'student']
+    },
+    { 
+      name: 'Attendance History', 
+      href: '/history', 
+      icon: ClockIcon, 
+      lucideIcon: Clock,
+      description: 'View past attendance records',
+      color: 'text-accent-600',
+      roles: ['admin', 'faculty', 'student']
+    },
+    { 
+      name: 'Events', 
+      href: '/events', 
+      icon: CalendarIcon, 
+      lucideIcon: Calendar,
+      description: 'View and join events',
+      color: 'text-purple-600',
+      roles: ['admin', 'faculty', 'student']
+    },
+    { 
+      name: 'Users Management', 
+      href: '/users', 
+      icon: Users, 
+      lucideIcon: Users,
+      description: 'Manage system users',
+      color: 'text-blue-600',
+      roles: ['admin']
+    },
+    { 
+      name: 'Departments', 
+      href: '/departments', 
+      icon: BuildingOfficeIcon, 
+      lucideIcon: Building,
+      description: 'Manage departments',
+      color: 'text-indigo-600',
+      roles: ['admin']
+    },
+    { 
+      name: 'Analytics', 
+      href: '/analytics', 
+      icon: BarChart3, 
+      lucideIcon: BarChart3,
+      description: 'View attendance analytics',
+      color: 'text-green-600',
+      roles: ['admin', 'faculty']
+    },
+    { 
+      name: 'Profile', 
+      href: '/profile', 
+      icon: UserIcon, 
+      lucideIcon: User,
+      description: 'Manage your account',
+      color: 'text-emerald-600',
+      roles: ['admin', 'faculty', 'student']
+    },
+  ]
+
+  return baseNavigation.filter(item => 
+    item.roles.includes(userRole) || item.roles.includes('all')
+  )
+}
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -83,19 +137,47 @@ const Layout = ({ children }) => {
   const navigate = useNavigate()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [greeting, setGreeting] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
+  const [userStatus, setUserStatus] = useState(null)
+  const [todayAttendance, setTodayAttendance] = useState(null)
+  const [upcomingEvents, setUpcomingEvents] = useState([])
   
-  // Update time and greeting
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 60000) // Update every minute
-    
-    updateGreeting()
-    
-    return () => clearInterval(intervalId)
+  // Memoize navigation items based on user role
+  const navigation = useMemo(() => {
+    return getNavigationItems(currentUser?.role || 'student')
+  }, [currentUser?.role])
+
+  const fetchTodayAttendance = useCallback(async () => {
+    try {
+      // Mock today's attendance - replace with actual API call
+      setTodayAttendance({
+        status: 'present',
+        checkInTime: '09:15 AM',
+        checkOutTime: null
+      })
+    } catch (error) {
+      console.error('Error fetching today attendance:', error)
+    }
   }, [])
   
-  const updateGreeting = () => {
+  const fetchUpcomingEvents = useCallback(async () => {
+    try {
+      // Mock upcoming events - replace with actual API call
+      setUpcomingEvents([
+        {
+          id: 1,
+          name: 'Team Meeting',
+          startTime: '2:00 PM',
+          location: 'Conference Room A'
+        }
+      ])
+    } catch (error) {
+      console.error('Error fetching upcoming events:', error)
+    }
+  }, [])
+  
+  const updateGreeting = useCallback(() => {
     const hour = new Date().getHours()
     let newGreeting = ''
     
@@ -108,29 +190,97 @@ const Layout = ({ children }) => {
     }
     
     setGreeting(newGreeting)
-  }
+  }, [])
+
+  // Update time and greeting
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentTime(new Date())
+      updateGreeting()
+    }, 60000) // Update every minute
+    
+    updateGreeting()
+    
+    return () => clearInterval(intervalId)
+  }, [updateGreeting])
   
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout()
     navigate('/login')
-  }
+  }, [logout, navigate])
   
-  const formatDate = (date) => {
+  const formatDate = useCallback((date) => {
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     })
-  }
+  }, [])
   
-  const formatTime = (date) => {
+  const formatTime = useCallback((date) => {
     return date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: true
     })
-  }
+  }, [])
+  
+  const handleSearch = useCallback((e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
+      setShowSearch(false)
+      setSearchQuery('')
+    }
+  }, [searchQuery, navigate])
+  
+  const getRoleIcon = useCallback((role) => {
+    switch (role) {
+      case 'admin':
+        return <Shield className="h-4 w-4 text-red-500" />
+      case 'faculty':
+        return <GraduationCap className="h-4 w-4 text-blue-500" />
+      case 'student':
+        return <AcademicCapIcon className="h-4 w-4 text-green-500" />
+      default:
+        return <User className="h-4 w-4 text-gray-500" />
+    }
+  }, [])
+  
+  const getAttendanceStatusIcon = useCallback((status) => {
+    switch (status) {
+      case 'present':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'late':
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      case 'absent':
+        return <XCircle className="h-4 w-4 text-red-500" />
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />
+    }
+  }, [])
+
+
+  const fetchUserStatus = useCallback(async () => {
+    try {
+      // This would be an API call to get user status
+      setUserStatus('active')
+    } catch (error) {
+      console.error('Error fetching user status:', error)
+    }
+  }, [])
+
+
+  // Fetch user status and notifications
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserStatus()
+      fetchTodayAttendance()
+      fetchUpcomingEvents()
+    }
+  }, [currentUser, fetchUserStatus, fetchTodayAttendance, fetchUpcomingEvents])
+
 
   return (
     <PerformanceMonitor>
@@ -152,7 +302,7 @@ const Layout = ({ children }) => {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 bg-gray-600 bg-opacity-75" />
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
           </Transition.Child>
           <Transition.Child
             as={Fragment}
@@ -197,26 +347,95 @@ const Layout = ({ children }) => {
               </div>
               
               <div className="mt-4 flex-1 h-0 overflow-y-auto">
-                {/* User Profile Section */}
+                {/* Enhanced User Profile Section */}
                 {currentUser && (
                   <div className="px-6 py-4 border-b border-border-light">
                     <div className="flex items-center space-x-3">
-                      <EnhancedAvatar 
-                        name={currentUser?.name}
-                        size="lg"
-                        className="ring-2 ring-primary-200"
-                      />
+                      <div className="relative">
+                        <EnhancedAvatar 
+                          name={currentUser?.name}
+                          size="lg"
+                          className="ring-2 ring-primary-200"
+                        />
+                        {userStatus && (
+                          <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 border-2 border-white rounded-full"></div>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          {currentUser?.name || 'User'}
-                        </p>
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm font-medium text-text-primary truncate">
+                            {currentUser?.name || 'User'}
+                          </p>
+                          {getRoleIcon(currentUser?.role)}
+                        </div>
                         <p className="text-xs text-text-secondary truncate">
                           {currentUser?.email || 'user@example.com'}
                         </p>
+                        {currentUser?.department && (
+                          <div className="flex items-center mt-1">
+                            <Building className="h-3 w-3 text-text-muted mr-1" />
+                            <p className="text-xs text-text-muted truncate">
+                              {currentUser.department.name || 'Department'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
+                    
+                    {/* Quick Status Display */}
+                    {todayAttendance && (
+                      <div className="mt-3 p-2 bg-background-secondary rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            {getAttendanceStatusIcon(todayAttendance.status)}
+                            <span className="text-xs font-medium text-text-primary">
+                              Today's Status
+                            </span>
+                          </div>
+                          <Badge 
+                            variant={todayAttendance.status === 'present' ? 'success' : 
+                                   todayAttendance.status === 'late' ? 'warning' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {todayAttendance.status}
+                          </Badge>
+                        </div>
+                        {todayAttendance.checkInTime && (
+                          <p className="text-xs text-text-muted mt-1">
+                            Check-in: {todayAttendance.checkInTime}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
+                
+                {/* Quick Actions */}
+                <div className="px-6 py-3 border-b border-border-light">
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
+                    Quick Actions
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto py-2 px-3 flex flex-col items-center space-y-1"
+                      onClick={() => navigate('/attendance')}
+                    >
+                      <Zap className="h-4 w-4" />
+                      <span className="text-xs">Mark</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto py-2 px-3 flex flex-col items-center space-y-1"
+                      onClick={() => navigate('/events')}
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="text-xs">Events</span>
+                    </Button>
+                  </div>
+                </div>
                 
                 {/* Navigation */}
                 <nav className="px-3 py-4 space-y-1">
@@ -288,26 +507,69 @@ const Layout = ({ children }) => {
             </div>
             
             <div className="flex-1 flex flex-col overflow-y-auto pt-4">
-              {/* User Profile Section */}
+              {/* Enhanced User Profile Section */}
               {currentUser && (
                 <div className="px-6 py-4 border-b border-border-light">
                   <div className="flex items-center space-x-3">
-                    <EnhancedAvatar 
-                      name={currentUser?.name}
-                      size="lg"
-                      className="ring-2 ring-primary-200"
-                    />
+                    <div className="relative">
+                      <EnhancedAvatar 
+                        name={currentUser?.name}
+                        size="lg"
+                        className="ring-2 ring-primary-200"
+                      />
+                      {userStatus && (
+                        <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 border-2 border-white rounded-full"></div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">
-                        {currentUser?.name || 'User'}
-                      </p>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {currentUser?.name || 'User'}
+                        </p>
+                        {getRoleIcon(currentUser?.role)}
+                      </div>
                       <p className="text-xs text-text-secondary truncate">
                         {currentUser?.email || 'user@example.com'}
                       </p>
+                      {currentUser?.department && (
+                        <div className="flex items-center mt-1">
+                          <Building className="h-3 w-3 text-text-muted mr-1" />
+                          <p className="text-xs text-text-muted truncate">
+                            {currentUser.department.name || 'Department'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
+              
+              {/* Quick Actions */}
+              <div className="px-6 py-3 border-b border-border-light">
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
+                  Quick Actions
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-auto py-2 px-3 flex flex-col items-center space-y-1"
+                    onClick={() => navigate('/attendance')}
+                  >
+                    <Zap className="h-4 w-4" />
+                    <span className="text-xs">Mark</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-auto py-2 px-3 flex flex-col items-center space-y-1"
+                    onClick={() => navigate('/events')}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="text-xs">Events</span>
+                  </Button>
+                </div>
+              </div>
               
               {/* Navigation */}
               <nav className="flex-1 px-4 py-4 space-y-2">
@@ -382,24 +644,27 @@ const Layout = ({ children }) => {
                 <div className="text-sm font-medium text-text-secondary">{formatTime(currentTime)}</div>
               </div>
               
-              {/* Greeting */}
-              <div className="hidden md:block">
+              {/* Enhanced Greeting with Event Info */}
+              <div className="hidden lg:block">
                 <h2 className="text-xl font-heading font-semibold text-text-primary">
                   {greeting}, {currentUser?.name?.split(' ')[0] || 'there'}!
                 </h2>
               </div>
             </div>
             
-            {/* Right side actions */}
-            <div className="flex items-center space-x-2">              
-              {/* Notifications */}
-              <Button variant="ghost" size="icon" className="text-text-muted hover:text-text-primary relative">
-                <span className="sr-only">View notifications</span>
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-error-500 rounded-full"></span>
+            {/* Enhanced Right side actions */}
+            <div className="flex items-center space-x-3">
+              {/* Mobile Search Button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="md:hidden text-text-muted hover:text-text-primary"
+                onClick={() => setShowSearch(!showSearch)}
+              >
+                <Search className="h-5 w-5" />
               </Button>
               
-              {/* Profile dropdown */}
+              {/* Enhanced Profile dropdown */}
               <Menu as="div" className="relative">
                 <div>
                   <Menu.Button className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
@@ -421,11 +686,30 @@ const Layout = ({ children }) => {
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-strong bg-background-surface ring-1 ring-border-light focus:outline-none divide-y divide-border-light">
+                  <Menu.Items className="origin-top-right absolute right-0 mt-2 w-64 rounded-xl shadow-strong bg-background-surface ring-1 ring-border-light focus:outline-none divide-y divide-border-light">
                     <div className="py-3 px-4">
-                      <p className="text-sm font-medium text-text-primary">Signed in as</p>
-                      <p className="text-sm text-text-secondary truncate">{currentUser?.email}</p>
+                      <div className="flex items-center space-x-3">
+                        <EnhancedAvatar 
+                          name={currentUser?.name}
+                          size="lg"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">
+                            {currentUser?.name}
+                          </p>
+                          <p className="text-xs text-text-secondary truncate">
+                            {currentUser?.email}
+                          </p>
+                          <div className="flex items-center mt-1">
+                            {getRoleIcon(currentUser?.role)}
+                            <span className="ml-1 text-xs text-text-muted capitalize">
+                              {currentUser?.role}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                    
                     <div className="py-1">
                       <Menu.Item>
                         {({ active }) => (
@@ -455,7 +739,38 @@ const Layout = ({ children }) => {
                           </Link>
                         )}
                       </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <Link
+                            to="/history"
+                            className={cn(
+                              "flex items-center px-4 py-2 text-sm transition-colors duration-150",
+                              active ? 'bg-background-secondary text-text-primary' : 'text-text-secondary'
+                            )}
+                          >
+                            <Clock className="mr-3 h-4 w-4" />
+                            Attendance History
+                          </Link>
+                        )}
+                      </Menu.Item>
+                      {currentUser?.role === 'admin' && (
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              to="/settings"
+                              className={cn(
+                                "flex items-center px-4 py-2 text-sm transition-colors duration-150",
+                                active ? 'bg-background-secondary text-text-primary' : 'text-text-secondary'
+                              )}
+                            >
+                              <Settings className="mr-3 h-4 w-4" />
+                              Settings
+                            </Link>
+                          )}
+                        </Menu.Item>
+                      )}
                     </div>
+                    
                     <div className="py-1">
                       <Menu.Item>
                         {({ active }) => (
@@ -479,19 +794,74 @@ const Layout = ({ children }) => {
           </div>
         </div>
 
-        {/* Main content area */}
+        {/* Mobile Search Overlay */}
+        {showSearch && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowSearch(false)} />
+            <div className="fixed top-0 left-0 right-0 bg-background-surface p-4">
+              <form onSubmit={handleSearch} className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-text-muted" />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search users, events, attendance..."
+                  className="block w-full pl-10 pr-10 py-3 border border-border-light rounded-lg 
+                           bg-background-primary text-text-primary placeholder-text-muted
+                           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                           text-base"
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute inset-y-0 right-0 pr-3"
+                  onClick={() => setShowSearch(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Main content area */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-background-primary">
           <div className="py-6">
             <div className="container-responsive">
-              {/* Mobile greeting */}
+              {/* Enhanced Mobile greeting with status */}
               <div className="lg:hidden mb-6">
-                <h2 className="text-xl font-heading font-semibold text-text-primary">
-                  {greeting}, {currentUser?.name?.split(' ')[0] || 'there'}!
-                </h2>
-                <p className="text-sm text-text-secondary">{formatDate(currentTime)}</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-heading font-semibold text-text-primary">
+                      {greeting}, {currentUser?.name?.split(' ')[0] || 'there'}!
+                    </h2>
+                    <p className="text-sm text-text-secondary">{formatDate(currentTime)}</p>
+                    {upcomingEvents.length > 0 && (
+                      <p className="text-xs text-text-muted mt-1">
+                        Next: {upcomingEvents[0].name} at {upcomingEvents[0].startTime}
+                      </p>
+                    )}
+                  </div>
+                  {todayAttendance && (
+                    <div className="flex items-center space-x-2">
+                      {getAttendanceStatusIcon(todayAttendance.status)}
+                      <Badge 
+                        variant={todayAttendance.status === 'present' ? 'success' : 
+                               todayAttendance.status === 'late' ? 'warning' : 'destructive'}
+                        className="text-xs"
+                      >
+                        {todayAttendance.status}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
               </div>
               
-              {/* Page content */}
+              {/* Page content with better accessibility */}
               <main id="main-content" className="animate-in" role="main" aria-label="Main content">
                 {children}
               </main>

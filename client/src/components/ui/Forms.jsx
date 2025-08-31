@@ -28,17 +28,17 @@ export const FormField = ({
   return (
     <div className={clsx('space-y-2', className)}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium text-gray-700">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       {children}
       {description && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        <p className="text-sm text-gray-500">{description}</p>
       )}
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+        <div className="flex items-center gap-2 text-sm text-red-600">
           <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -51,32 +51,32 @@ export const FormField = ({
 const inputVariants = cva(
   [
     'block w-full rounded-md border transition-colors duration-200 focus:ring-2 focus:ring-offset-2',
-    'placeholder:text-gray-400 dark:placeholder:text-gray-500',
+    'placeholder:text-gray-400',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ],
   {
     variants: {
       variant: {
         default: [
-          'border-gray-300 dark:border-gray-600',
-          'bg-white dark:bg-gray-800',
-          'text-gray-900 dark:text-gray-100',
-          'focus:border-blue-500 dark:focus:border-blue-400',
-          'focus:ring-blue-500 dark:focus:ring-blue-400',
+          'border-gray-300',
+          'bg-white',
+          'text-gray-900',
+          'focus:border-blue-500',
+          'focus:ring-blue-500',
         ],
         error: [
-          'border-red-300 dark:border-red-600',
-          'bg-white dark:bg-gray-800',
-          'text-gray-900 dark:text-gray-100',
-          'focus:border-red-500 dark:focus:border-red-400',
-          'focus:ring-red-500 dark:focus:ring-red-400',
+          'border-red-300',
+          'bg-white',
+          'text-gray-900',
+          'focus:border-red-500',
+          'focus:ring-red-500',
         ],
         success: [
-          'border-green-300 dark:border-green-600',
-          'bg-white dark:bg-gray-800',
-          'text-gray-900 dark:text-gray-100',
-          'focus:border-green-500 dark:focus:border-green-400',
-          'focus:ring-green-500 dark:focus:ring-green-400',
+          'border-green-300',
+          'bg-white',
+          'text-gray-900',
+          'focus:border-green-500',
+          'focus:ring-green-500',
         ],
       },
       size: {
@@ -110,7 +110,7 @@ export const EnhancedInput = forwardRef(({
       <div className="relative">
         {icon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <div className="h-5 w-5 text-gray-400 dark:text-gray-500">
+            <div className="h-5 w-5 text-gray-400">
               {icon}
             </div>
           </div>
@@ -127,7 +127,7 @@ export const EnhancedInput = forwardRef(({
         />
         {rightIcon && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <div className="h-5 w-5 text-gray-400 dark:text-gray-500">
+            <div className="h-5 w-5 text-gray-400">
               {rightIcon}
             </div>
           </div>
@@ -248,23 +248,23 @@ export const FileUpload = ({
         {...props}
       />
       <div className={clsx(
-        'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center',
-        'hover:border-gray-400 dark:hover:border-gray-500 transition-colors duration-200',
+        'border-2 border-dashed border-gray-300 rounded-lg p-6 text-center',
+        'hover:border-gray-400 transition-colors duration-200',
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'cursor-pointer'
       )}>
         {children || (
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600">
               Click to upload or drag and drop
             </p>
             {accept && (
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Accepted formats: {accept}
               </p>
             )}
             {maxSize && (
-              <p className="text-xs text-gray-500 dark:text-gray-500">
+              <p className="text-xs text-gray-500">
                 Maximum size: {maxSize}MB
               </p>
             )}
@@ -290,10 +290,9 @@ export const EnhancedCheckbox = forwardRef(({
           ref={ref}
           type="checkbox"
           className={clsx(
-            'h-4 w-4 rounded border-gray-300 dark:border-gray-600',
-            'text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400',
-            'dark:bg-gray-800 dark:checked:bg-blue-600',
-            error && 'border-red-300 dark:border-red-600',
+            'h-4 w-4 rounded border-gray-300',
+            'text-blue-600 focus:ring-blue-500',
+            error && 'border-red-300',
             className
           )}
           {...props}
@@ -302,15 +301,15 @@ export const EnhancedCheckbox = forwardRef(({
       {(label || description) && (
         <div className="ml-3 text-sm">
           {label && (
-            <label className="font-medium text-gray-700 dark:text-gray-300">
+            <label className="font-medium text-gray-700">
               {label}
             </label>
           )}
           {description && (
-            <p className="text-gray-500 dark:text-gray-400">{description}</p>
+            <p className="text-gray-500">{description}</p>
           )}
           {error && (
-            <p className="text-red-600 dark:text-red-400 mt-1">{error}</p>
+            <p className="text-red-600 mt-1">{error}</p>
           )}
         </div>
       )}
@@ -333,11 +332,11 @@ export const RadioGroup = ({ options, value, onChange, name, className = '' }) =
             value={option.value}
             checked={value === option.value}
             onChange={(e) => onChange(e.target.value)}
-            className="h-4 w-4 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-800"
+            className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           <label
             htmlFor={`${name}-${option.value}`}
-            className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="ml-3 block text-sm font-medium text-gray-700"
           >
             {option.label}
           </label>
@@ -359,21 +358,21 @@ export const FormProgress = ({ currentStep, totalSteps, steps = [] }) => {
               'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium',
               index <= currentStep
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                : 'bg-gray-200 text-gray-500'
             )}
           >
             {index + 1}
           </div>
         ))}
       </div>
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      <div className="w-full bg-gray-200 rounded-full h-2">
         <div
           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
           style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
         />
       </div>
       {steps[currentStep] && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
+        <p className="text-sm text-gray-600 mt-2 text-center">
           {steps[currentStep]}
         </p>
       )}

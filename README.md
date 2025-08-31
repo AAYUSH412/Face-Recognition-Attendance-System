@@ -211,6 +211,11 @@ After starting the server, seed the database with test data:
 cd server && npm run seed
 ```
 
+**Hardcoded Login Credentials:**
+- 👑 **Admin**: admin@college.edu | admin123
+- 👨‍🏫 **Faculty**: facultyfacerecognition@gmail.com | facultyface123  
+- 👨‍🎓 **Student**: facerecognition@gmail.com | facestudent123
+
 **Sample Data Created:**
 - 8 Departments (CS, IT, ECE, ME, CE, EE, MATH, PHY)
 - 118 Users (3 admins, 15 faculty, 100 students)

@@ -120,10 +120,62 @@ const seedUsers = async (departmentIds) => {
     const users = [];
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash('password123', salt);
+    
+    // Hardcoded passwords for specific users
+    const studentPassword = await bcrypt.hash('facestudent123', salt);
+    const facultyPassword = await bcrypt.hash('facultyface123', salt);
+    const adminPassword = await bcrypt.hash('admin123', salt);
+    
     let userIndex = 1;
 
-    // Create admin users
-    for (let i = 0; i < 3; i++) {
+    // Create hardcoded admin user first
+    users.push({
+      name: "Admin User",
+      email: "admin@college.edu",
+      password: adminPassword,
+      role: 'admin',
+      department: getRandomElement(departmentIds),
+      registrationId: "ADMIN123",
+      faceData: [],
+      isActive: true
+    });
+
+    // Create hardcoded faculty user
+    users.push({
+      name: "Dr. Faculty User",
+      email: "facultyfacerecognition@gmail.com",
+      password: facultyPassword,
+      role: 'faculty',
+      department: getRandomElement(departmentIds),
+      registrationId: "FAC001",
+      faceData: [{
+        imageId: `face_${Date.now()}_faculty`,
+        imageUrl: `https://via.placeholder.com/300x300?text=Faculty+User`,
+        imageKit_id: `imagekit_${Date.now()}_faculty`,
+        createdAt: getRandomDateInRange(60, 0)
+      }],
+      isActive: true
+    });
+
+    // Create hardcoded student user
+    users.push({
+      name: "Student User",
+      email: "facerecognition@gmail.com",
+      password: studentPassword,
+      role: 'student',
+      department: getRandomElement(departmentIds),
+      registrationId: "STU0001",
+      faceData: [{
+        imageId: `face_${Date.now()}_student`,
+        imageUrl: `https://via.placeholder.com/300x300?text=Student+User`,
+        imageKit_id: `imagekit_${Date.now()}_student`,
+        createdAt: getRandomDateInRange(90, 0)
+      }],
+      isActive: true
+    });
+
+    // Create additional admin users
+    for (let i = 0; i < 2; i++) {
       const firstName = getRandomElement(firstNames);
       const lastName = getRandomElement(lastNames);
       users.push({
@@ -132,14 +184,14 @@ const seedUsers = async (departmentIds) => {
         password: hashedPassword,
         role: 'admin',
         department: getRandomElement(departmentIds),
-        registrationId: generateRegistrationId('admin', i + 1),
+        registrationId: generateRegistrationId('admin', i + 2),
         faceData: [],
         isActive: true
       });
     }
 
     // Create faculty users
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 14; i++) {
       const firstName = getRandomElement(firstNames);
       const lastName = getRandomElement(lastNames);
       users.push({
@@ -148,7 +200,7 @@ const seedUsers = async (departmentIds) => {
         password: hashedPassword,
         role: 'faculty',
         department: getRandomElement(departmentIds),
-        registrationId: generateRegistrationId('faculty', i + 1),
+        registrationId: generateRegistrationId('faculty', i + 2),
         faceData: Math.random() > 0.3 ? [{
           imageId: `face_${Date.now()}_${i}`,
           imageUrl: `https://via.placeholder.com/300x300?text=Face+${i}`,
@@ -160,7 +212,7 @@ const seedUsers = async (departmentIds) => {
     }
 
     // Create student users
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 99; i++) {
       const firstName = getRandomElement(firstNames);
       const lastName = getRandomElement(lastNames);
       users.push({
@@ -169,7 +221,7 @@ const seedUsers = async (departmentIds) => {
         password: hashedPassword,
         role: 'student',
         department: getRandomElement(departmentIds),
-        registrationId: generateRegistrationId('student', i + 1),
+        registrationId: generateRegistrationId('student', i + 2),
         faceData: Math.random() > 0.2 ? [{
           imageId: `face_${Date.now()}_${i}`,
           imageUrl: `https://via.placeholder.com/300x300?text=Face+${i}`,
@@ -392,16 +444,27 @@ const seedDatabase = async () => {
     console.log(`   • Attendance Records: ${await Attendance.countDocuments()}`);
     console.log(`   • Event Attendance Records: ${await EventAttendance.countDocuments()}`);
 
-    console.log('\n🔐 Default Login Credentials:');
+    console.log('\n🔐 Hardcoded Login Credentials:');
+    console.log('==========================================');
+    console.log('👑 ADMIN LOGIN:');
+    console.log('   Email: admin@college.edu');
+    console.log('   Password: admin123');
+    console.log('   Registration ID: ADMIN123');
+    
+    console.log('\n👨‍🏫 FACULTY LOGIN:');
+    console.log('   Email: facultyfacerecognition@gmail.com');
+    console.log('   Password: facultyface123');
+    console.log('   Registration ID: FAC001');
+    
+    console.log('\n�‍🎓 STUDENT LOGIN:');
+    console.log('   Email: facerecognition@gmail.com');
+    console.log('   Password: facestudent123');
+    console.log('   Registration ID: STU0001');
+    console.log('==========================================');
+
+    console.log('\n🔐 Default Login Credentials for other users:');
     console.log('   Email: Any generated email (check console output)');
     console.log('   Password: password123');
-    
-    console.log('\n💡 Sample Admin User:');
-    const adminUser = createdUsers.find(u => u.role === 'admin');
-    if (adminUser) {
-      console.log(`   Email: ${adminUser.email}`);
-      console.log(`   Password: password123`);
-    }
 
   } catch (error) {
     console.error('❌ Error seeding database:', error);

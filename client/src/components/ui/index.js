@@ -38,9 +38,6 @@ export {
   SlideUpPanel
 } from './Animation';
 
-// Theme Components
-export { ThemeToggle, ThemeSelector } from './ThemeToggle';
-
 // Enhanced Form Components
 export {
   Form,

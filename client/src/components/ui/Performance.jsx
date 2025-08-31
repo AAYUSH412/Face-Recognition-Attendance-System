@@ -171,42 +171,6 @@ MemoizedComponent.displayName = 'MemoizedComponent';
 
 // Performance monitor
 export const PerformanceMonitor = ({ children }) => {
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      // Monitor render performance
-      const observer = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          if (entry.entryType === 'measure') {
-            console.log(`Performance: ${entry.name} took ${entry.duration}ms`);
-          }
-        }
-      });
-
-      observer.observe({ entryTypes: ['measure'] });
-
-      // Monitor memory usage
-      if ('memory' in performance) {
-        const logMemory = () => {
-          const memory = performance.memory;
-          console.log('Memory usage:', {
-            used: Math.round(memory.usedJSHeapSize / 1048576) + ' MB',
-            total: Math.round(memory.totalJSHeapSize / 1048576) + ' MB',
-            limit: Math.round(memory.jsHeapSizeLimit / 1048576) + ' MB'
-          });
-        };
-
-        const memoryInterval = setInterval(logMemory, 10000);
-
-        return () => {
-          clearInterval(memoryInterval);
-          observer.disconnect();
-        };
-      }
-
-      return () => observer.disconnect();
-    }
-  }, []);
-
   return children;
 };
 

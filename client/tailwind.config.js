@@ -4,7 +4,6 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -96,13 +95,6 @@ export default {
           secondary: '#f8fafc',
           tertiary: '#f1f5f9',
           surface: '#ffffff',
-        },
-        // Dark Mode Backgrounds
-        'dark-background': {
-          primary: '#0f172a',
-          secondary: '#1e293b',
-          tertiary: '#334155',
-          surface: '#1e293b',
         },
         // Text Hierarchy
         text: {
