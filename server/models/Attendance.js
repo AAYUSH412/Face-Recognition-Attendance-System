@@ -14,6 +14,7 @@ const AttendanceSchema = new mongoose.Schema({
   checkIn: {
     time: Date,
     imageUrl: String,
+    qrCode: String, // Store QR code data for QR-based attendance
     confidence: Number,
     method: {
       type: String,
@@ -29,6 +30,7 @@ const AttendanceSchema = new mongoose.Schema({
   checkOut: {
     time: Date,
     imageUrl: String,
+    qrCode: String, // Store QR code data for QR-based attendance
     confidence: Number,
     method: {
       type: String,

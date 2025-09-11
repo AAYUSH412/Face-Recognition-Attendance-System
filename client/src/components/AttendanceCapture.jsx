@@ -184,9 +184,11 @@ const AttendanceCapture = () => {
       
       const response = await api.post('/api/attendance/mark', {
         type: captureType,
-        imageData: imageSrc,
-        timestamp: new Date().toISOString(),
-        method: 'face'
+        base64Image: imageSrc,
+        confidence: faceDetectionConfidence,
+        method: 'face_recognition',
+        location: 'Frontend Camera',
+        timestamp: new Date().toISOString()
       });
 
       if (response.data.success) {
@@ -274,8 +276,10 @@ const AttendanceCapture = () => {
               const response = await api.post('/api/attendance/mark', {
                 type: captureType,
                 qrCode: decodedText,
-                timestamp: new Date().toISOString(),
-                method: 'qr'
+                method: 'qr_code',
+                confidence: 100,
+                location: 'QR Code Scanner',
+                timestamp: new Date().toISOString()
               });
 
               if (response.data.success) {

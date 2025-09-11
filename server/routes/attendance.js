@@ -166,7 +166,17 @@ router.get('/today', auth, async (req, res) => {
 // @access  Private
 router.post('/mark', auth, async (req, res) => {
   try {
-    const { base64Image, confidence, location, type } = req.body;
+    const { base64Image, qrCode, confidence, location, type, method } = req.body;
+    
+    console.log('Attendance marking request:', {
+      userId: req.user.id,
+      type,
+      method,
+      hasImage: !!base64Image,
+      hasQrCode: !!qrCode,
+      confidence,
+      location
+    });
     
     // Check attendance type (check-in or check-out)
     const isCheckIn = type === 'check-in';
@@ -184,15 +194,23 @@ router.post('/mark', auth, async (req, res) => {
       }
     });
     
-    // Upload attendance image to ImageKit
+    // Upload attendance image to ImageKit (only for face recognition with image)
     let imageUrl = '';
-    if (base64Image) {
-      const uploadResponse = await imagekit.upload({
-        file: base64Image,
-        fileName: `attendance_${isCheckIn ? 'in' : 'out'}_${req.user.id}_${Date.now()}.jpg`,
-        folder: '/attendance/'
-      });
-      imageUrl = uploadResponse.url;
+    if (base64Image && method === 'face_recognition') {
+      try {
+        const uploadResponse = await imagekit.upload({
+          file: base64Image,
+          fileName: `attendance_${isCheckIn ? 'in' : 'out'}_${req.user.id}_${Date.now()}.jpg`,
+          folder: '/attendance/'
+        });
+        imageUrl = uploadResponse.url;
+        console.log('Image uploaded successfully to ImageKit:', imageUrl);
+      } catch (uploadError) {
+        console.error('Error uploading image to ImageKit:', uploadError);
+        // Continue with attendance marking even if image upload fails
+        // Set imageUrl to empty string so attendance can still be recorded
+        imageUrl = '';
+      }
     }
     
     // If checking in and no attendance record exists, create new one
@@ -219,18 +237,23 @@ router.post('/mark', auth, async (req, res) => {
           checkIn: {
             time: new Date(),
             imageUrl,
-            confidence: confidence || 0,
-            verified: confidence >= 0.8 // Auto-verify if confidence is high
+            qrCode: method === 'qr_code' ? qrCode : undefined,
+            confidence: confidence || (method === 'qr_code' ? 100 : 0),
+            method: method || 'face_recognition',
+            verified: (confidence && confidence >= 0.8) || method === 'qr_code' // Auto-verify if confidence is high or QR code
           },
           status,
+          method: method || 'face_recognition',
           location: location || null
         });
       } else {
         attendance.checkIn = {
           time: new Date(),
           imageUrl,
-          confidence: confidence || 0,
-          verified: confidence >= 0.8
+          qrCode: method === 'qr_code' ? qrCode : undefined,
+          confidence: confidence || (method === 'qr_code' ? 100 : 0),
+          method: method || 'face_recognition',
+          verified: (confidence && confidence >= 0.8) || method === 'qr_code'
         };
         
         if (location) {
@@ -268,8 +291,10 @@ router.post('/mark', auth, async (req, res) => {
       attendance.checkOut = {
         time: new Date(),
         imageUrl,
-        confidence: confidence || 0,
-        verified: confidence >= 0.8
+        qrCode: method === 'qr_code' ? qrCode : undefined,
+        confidence: confidence || (method === 'qr_code' ? 100 : 0),
+        method: method || 'face_recognition',
+        verified: (confidence && confidence >= 0.8) || method === 'qr_code'
       };
       
       // Set early-checkout status if applicable
@@ -294,14 +319,30 @@ router.post('/mark', auth, async (req, res) => {
     
     await attendance.save();
     
+    // Populate user data for better response
+    await attendance.populate('user', 'name email studentId employeeId');
+    
+    console.log('Attendance marked successfully:', {
+      userId: req.user.id,
+      type,
+      method: attendance.method,
+      imageUploaded: !!imageUrl,
+      qrCode: method === 'qr_code' ? 'Yes' : 'No'
+    });
+    
     res.json({
       success: true,
       message: `${isCheckIn ? 'Check-in' : 'Check-out'} recorded successfully`,
-      attendance
+      attendance,
+      imageUploaded: !!imageUrl
     });
   } catch (error) {
-    console.error('Mark attendance error:', error.message);
-    res.status(500).json({ message: 'Server error marking attendance' });
+    console.error('Mark attendance error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error marking attendance',
+      error: error.message 
+    });
   }
 });
 
