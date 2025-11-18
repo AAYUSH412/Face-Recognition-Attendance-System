@@ -1,0 +1,140 @@
+# Development Docker Compose for Face Recognition Attendance System
+# Created by Aayush Vaghela (https://github.com/AAYUSH412)
+
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: fras-mongodb-dev
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: face_recognition_db_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_dev_data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - fras-dev-network
+
+  # MongoDB Express (Database Management UI)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: fras-mongo-express-dev
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    networks:
+      - fras-dev-network
+
+  # Redis Cache
+  redis:
+    image: redis:7.2-alpine
+    container_name: fras-redis-dev
+    restart: unless-stopped
+    command: redis-server --requirepass redis123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - fras-dev-network
+
+  # Redis Commander (Redis Management UI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: fras-redis-commander-dev
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:redis123
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin123
+    ports:
+      - "8082:8081"
+    depends_on:
+      - redis
+    networks:
+      - fras-dev-network
+
+  # Node.js Server (Development)
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: fras-server-dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/face_recognition_db_dev?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - JWT_SECRET=dev-jwt-secret-key-not-for-production
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - ./uploads:/app/uploads
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - fras-dev-network
+
+  # React Client (Development)
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: fras-client-dev
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:4000/api
+      - VITE_APP_NAME=Face Recognition Attendance System
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    networks:
+      - fras-dev-network
+
+  # React Admin (Development)
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.dev
+    container_name: fras-admin-dev
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:4000/api
+      - VITE_APP_NAME=FRAS Admin Panel
+    ports:
+      - "5174:5173"
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+    networks:
+      - fras-dev-network
+
+volumes:
+  mongodb_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  fras-dev-network:
+    driver: bridge

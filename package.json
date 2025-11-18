@@ -1,0 +1,55 @@
+{
+  "name": "face-recognition-attendance-system",
+  "version": "1.0.0",
+  "description": "A cutting-edge attendance management system powered by AI facial recognition technology",
+  "main": "index.js",
+  "scripts": {
+    "dev": "./start-all.sh",
+    "start": "./start-all.sh",
+    "stop": "./stop-all.sh",
+    "install-all": "./start-all.sh --install",
+    "docker:dev": "./start-all.sh --docker",
+    "docker:up": "docker-compose -f docker-compose.dev.yml up --build -d",
+    "docker:down": "docker-compose -f docker-compose.dev.yml down",
+    "docker:logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "docker:prod": "docker-compose up --build -d",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
+    "admin:dev": "cd admin && npm run dev",
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:admin": "cd admin && npm install",
+    "build": "npm run build:client && npm run build:admin",
+    "build:client": "cd client && npm run build",
+    "build:admin": "cd admin && npm run build",
+    "lint": "npm run lint:server && npm run lint:client && npm run lint:admin",
+    "lint:server": "cd server && npm run lint",
+    "lint:client": "cd client && npm run lint",
+    "lint:admin": "cd admin && npm run lint"
+  },
+  "keywords": [
+    "attendance",
+    "face-recognition",
+    "ai",
+    "mern",
+    "react",
+    "nodejs",
+    "mongodb",
+    "tensorflow",
+    "machine-learning"
+  ],
+  "author": "Aayush Vaghela <aayushvaghela412@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAYUSH412/Face-Recognition-Attendance-System.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AAYUSH412/Face-Recognition-Attendance-System/issues"
+  },
+  "homepage": "https://github.com/AAYUSH412/Face-Recognition-Attendance-System#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
